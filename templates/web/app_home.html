@@ -1,6 +1,7 @@
 {% extends "web/app/app_base.html" %}
 {% load i18n %}
 {% load static %}
+{% load form_tags %}
 {% block app %}
 <section class="app-card">
     <div class="pg-columns pg-columns-reversed pg-align-items-center">
@@ -11,8 +12,16 @@
 </section>
 <section class="app-card">
     <div class="pg-content">
-        <p>To add more to this page you can make new sections like this one.</p>
-        <p>Tip: the source of this page can be found at <code>templates/web/app_home.html</code></p>
+        <p>Upload CSV with Appointment ids as the only column.</p>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ zonprep_form.non_field_errors }}
+            {% render_form_fields zonprep_form %}
+            <div class="mt-2">
+                <button class="pg-button-primary" type="submit">{% translate "Submit Form" %}</button>
+            </div>
+        </form>
     </div>
 </section>
 {% endblock %}
