@@ -141,9 +141,9 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": env("DJANGO_DATABASE_NAME", default="zon_prep_ocr_project"),
-            "USER": env("DJANGO_DATABASE_USER", default="postgres"),
-            "PASSWORD": env("DJANGO_DATABASE_PASSWORD", default="***"),
+            "NAME": env("DJANGO_DATABASE_NAME", default="zonprep_db"),
+            "USER": env("DJANGO_DATABASE_USER", default="zonprep_db_user"),
+            "PASSWORD": env("DJANGO_DATABASE_PASSWORD", default="zonprep_db_user"),
             "HOST": env("DJANGO_DATABASE_HOST", default="localhost"),
             "PORT": env("DJANGO_DATABASE_PORT", default="5432"),
         }
