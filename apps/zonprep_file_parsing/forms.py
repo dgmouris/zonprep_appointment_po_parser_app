@@ -16,3 +16,5 @@ class ZonprepAppointmentCSVUploadForm(forms.Form):
             raise forms.ValidationError('This file is not of type text/csv.')
 
         return csv_file
+
+

@@ -6,6 +6,4 @@ please take a look at the file
 apps/web/views.py
 
 under the "home" function
-
-
 '''

@@ -14,7 +14,7 @@
     <div class="pg-content">
         <p>Upload CSV with Appointment ids as the only column.</p>
 
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             {{ zonprep_form.non_field_errors }}
             {% render_form_fields zonprep_form %}
@@ -22,6 +22,19 @@
                 <button class="pg-button-primary" type="submit">{% translate "Submit Form" %}</button>
             </div>
         </form>
+        {% if submitted %}
+        <p>Form submitted successfully information below</p>
+        <ul>
+            <li>
+                New appointments created: <b>{{created_appointments}}</b>
+            </li>
+            <li>
+                Appointments that already exist: <b>{{already_created_appointments}}</b>
+            </li>
+        </ul>
+        
+        {% endif %}
+
     </div>
 </section>
 {% endblock %}
