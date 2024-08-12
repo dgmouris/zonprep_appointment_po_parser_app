@@ -385,3 +385,6 @@ LOGGING = {
         },
     },
 }
+
+# GMAIL ACCOUNT CREDS
+GMAIL_SECRET_CREDENTIALS = env("GMAIL_SECRET_CREDENTIALS", default="")

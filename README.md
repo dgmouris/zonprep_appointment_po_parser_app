@@ -1,14 +1,13 @@
 # ZonPrep OCR Parser.
 
-ZonPrepsOc
+ZonPreps OCR Parser.
+
+Most of this project is going to be in the folder `apps/zonprep_file_parsing`.
 
 ## Installation
 
-Setup a virtualenv and install requirements
-(this example uses [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/)):
-
 ```bash
-mkvirtualenv zon_prep_ocr_project -p python3.11
+python -m venv ./venv
 pip install -r dev-requirements.txt
 ```
 
