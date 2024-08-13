@@ -28,6 +28,26 @@ class ZonprepAppointment(BaseModel):
     def get_email_subject(self):
         return F"POD for freight: {self.appointment_id}"
 
+    # State
+    '''
+    This function fetches appointments in the CREATED state,
+    sends emails out to the external fulfillment team,
+    and moves the state to SENT_TO_FULFILLMENT
+
+    Note: this will have to be in a cron job/Celery beat task.
+    '''
+    @staticmethod
+    def move_state_to_sent_to_fulfillment():
+        appointments = ZonprepAppointment.objects.filter(
+            state=ZonprepAppointmentState.CREATED
+        )
+        for appointment in appointments:
+            message = appointment.send_external_appointment_request_email()
+            if message:
+                appointment.state = ZonprepAppointmentState.SENT_TO_FULFILLMENT
+                appointment.save()    
+    
+    # Helper methods.
     '''
     Once the appointment is in the CREATED state
     you need to send an email to the external fulfillment
@@ -49,24 +69,10 @@ class ZonprepAppointment(BaseModel):
         return message
 
 
-    # State
-    '''
-    This function fetches appointments in the CREATED state,
-    sends emails out to the external fulfillment team,
-    and moves the state to SENT_TO_FULFILLMENT
 
-    Note: this will have to be in a cron job/Celery beat task.
-    '''
-    @staticmethod
-    def move_state_to_sent_to_fulfillment():
-        appointments = ZonprepAppointment.objects.filter(
-            state=ZonprepAppointmentState.CREATED
-        )
-        for appointment in appointments:
-            message = appointment.send_external_appointment_request_email()
-            if message:
-                appointment.state = ZonprepAppointmentState.SENT_TO_FULFILLMENT
-                appointment.save()
+
+
+
 
 '''
 This singleton model is solely for the purpose of storing

@@ -19,6 +19,7 @@ class ZonprepAppointmentState(Enum):
         return self.value
     
 
+
 '''
 Note on the above.
 States are used to keep track of what step an appointment is in.
