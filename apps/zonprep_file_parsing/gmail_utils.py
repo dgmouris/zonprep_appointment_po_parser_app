@@ -192,3 +192,21 @@ class GmailUtility:
             return message
         except HttpError as error:
             raise GmailSendingError(f'An error occurred: {error}')
+
+    def get_message_attachment(self, email=None, message_detail=None):
+        if email is None:
+            return
+        if message_detail is None:
+            message_detail = self.get_message_detail(email['id'], msg_format='full')
+        message_detail_payload = message_detail['payload']
+        if 'parts' in message_detail_payload:
+            for msg_payload in message_detail_payload['parts']:
+                if msg_payload['filename']:
+                    attachment_id = None
+                    if 'attachmentId' in msg_payload['body']:
+                        attachment_id = msg_payload['body']['attachmentId']
+                    file_name = msg_payload['filename']
+                    save_location = os.path.join(os.getcwd(), 'attachments', file_name)
+                    file_data = self.get_file_data(email['id'], attachment_id, file_name, save_location)
+        
+        return file_data
