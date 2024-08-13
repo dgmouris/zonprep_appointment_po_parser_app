@@ -1,5 +1,27 @@
+from enum import Enum
+
+
+class ZonprepAppointmentState(Enum):
+    CREATED = "Created"
+    SENT_TO_FULFILLMENT = "SentToFulfillment"
+    FULFILLMENT_NOT_REPLIED = "FulfillmentNotReplied"
+    FULFILLMENT_RAW_ATTACHMENT_DOWNLOADED = "FulfillmentRawAttachmentDownloaded"
+    INCORRECT_FULFILLMENT_ATTACHMENT_RECEIVED = "IncorrectFulfillmentAttachmentRecieved"
+    SUCCESSFUL_OCR_ATTACHMENT_PARSE = "SuccessfulOCRAttachmentParse"
+    ERROR_OCR_ATTACHMENT_PARSE = "ErrorOCRAttachmentParse"
+    INVALID_ATTACHMENT = "InvalidAttachment"
+    SUCCESSFUL_APPOINTMENT_INFO_UPDATED = "SuccessfulAppointmentInfoUpdated"
+    SUCCESSFUL_APPOINTMENT_PO_DATA_CREATED = "SuccessfulAppointmentPODataCreated"
+    SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED = "SuccessSalesforceAppointmentDataUploaded"
+    ERROR_SALESFORCE_APPOINTMENT_DATA_UPLOADED = "ErrorSalesforceAppointmentDataUploaded"
+
+    def __str__(self):
+        return self.value
+    
+
 '''
-States are used to keep track of what step a file is in
+Note on the above.
+States are used to keep track of what step an appointment is in.
 
 - Created
 Record created in the upload appointments
@@ -43,31 +65,3 @@ an error has occurred and we'll have to do something
 with these probably manually at some point.
 
 '''
-
-CREATED = "Created"
-SENT_TO_FULFILLMENT = "SentToFulfillment"
-FULFILLMENT_NOT_REPLIED = "FulfillmentNotReplied"
-FULFILLMENT_RAW_ATTACHMENT_DOWNLOADED = "FulfillmentRawAttachmentDownloaded"
-INCORRECT_FULFILLMENT_ATTACHMENT_RECEIVED = "IncorrectFulfillmentAttachmentRecieved"
-SUCCESSFUL_OCR_ATTACHMENT_PARSE = "SuccessfulOCRAttachmentParse"
-ERROR_OCR_ATTACHMENT_PARSE = "ErrorOCRAttachmentParse"
-INVALID_ATTACHMENT = "InvalidAttachment"
-SUCCESSFUL_APPOINTMENT_INFO_UPDATED = "SuccessfulAppointmentInfoUpdated"
-SUCCESSFUL_APPOINTMENT_PO_DATA_CREATED = "SuccessfulAppointmentPODataCreated"
-SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED = "SuccessSalesforceAppointmentDataUploaded"
-ERROR_SALESFORCE_APPOINTMENT_DATA_UPLOADED = "ErrorSalesforceAppointmentDataUploaded"
-
-STATES = {
-    CREATED: CREATED,
-    SENT_TO_FULFILLMENT: SENT_TO_FULFILLMENT,
-    FULFILLMENT_NOT_REPLIED: FULFILLMENT_NOT_REPLIED,
-    FULFILLMENT_RAW_ATTACHMENT_DOWNLOADED: FULFILLMENT_RAW_ATTACHMENT_DOWNLOADED,
-    INCORRECT_FULFILLMENT_ATTACHMENT_RECEIVED: INCORRECT_FULFILLMENT_ATTACHMENT_RECEIVED,
-    SUCCESSFUL_OCR_ATTACHMENT_PARSE: SUCCESSFUL_OCR_ATTACHMENT_PARSE,
-    ERROR_OCR_ATTACHMENT_PARSE: ERROR_OCR_ATTACHMENT_PARSE,
-    INVALID_ATTACHMENT: INVALID_ATTACHMENT,
-    SUCCESSFUL_APPOINTMENT_INFO_UPDATED: SUCCESSFUL_APPOINTMENT_INFO_UPDATED,
-    SUCCESSFUL_APPOINTMENT_PO_DATA_CREATED: SUCCESSFUL_APPOINTMENT_PO_DATA_CREATED,
-    SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED: SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED,
-    ERROR_SALESFORCE_APPOINTMENT_DATA_UPLOADED: ERROR_SALESFORCE_APPOINTMENT_DATA_UPLOADED,
-}

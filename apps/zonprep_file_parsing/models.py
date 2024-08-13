@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 
 from apps.utils.models import BaseModel
 
-from .state import CREATED, SENT_TO_FULFILLMENT
+from .state import ZonprepAppointmentState
 from .gmail_utils import GmailUtility
 
 
@@ -18,11 +18,12 @@ class ZonprepAppointment(BaseModel):
 
     @staticmethod
     def create_appointment(appointment_id):
-        return ZonprepAppointment.objects.get_or_create(
+        appointment, _ =ZonprepAppointment.objects.get_or_create(
             appointment_id=appointment_id,
-            state=CREATED
         )
 
+        created = appointment.state == ZonprepAppointmentState.CREATED
+        return appointment, created
 
     def get_email_subject(self):
         return F"POD for freight: {self.appointment_id}"
@@ -48,16 +49,24 @@ class ZonprepAppointment(BaseModel):
         return message
 
 
-    def save(self, *args, **kwargs):
-        # Call the original save method
-        super().save(*args, **kwargs)
+    # State
+    '''
+    This function fetches appointments in the CREATED state,
+    sends emails out to the external fulfillment team,
+    and moves the state to SENT_TO_FULFILLMENT
 
-        # Move the state to SENT_TO_FULFILLMENT and send the email.
-        if self.state == CREATED:
-            message = self.send_external_appointment_request_email()
+    Note: this will have to be in a cron job/Celery beat task.
+    '''
+    @staticmethod
+    def move_state_to_sent_to_fulfillment():
+        appointments = ZonprepAppointment.objects.filter(
+            state=ZonprepAppointmentState.CREATED
+        )
+        for appointment in appointments:
+            message = appointment.send_external_appointment_request_email()
             if message:
-                self.state = SENT_TO_FULFILLMENT
-                self.save()
+                appointment.state = ZonprepAppointmentState.SENT_TO_FULFILLMENT
+                appointment.save()
 
 '''
 This singleton model is solely for the purpose of storing
