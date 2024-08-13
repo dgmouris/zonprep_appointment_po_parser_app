@@ -60,6 +60,8 @@ class ZonprepAppointment(BaseModel):
     # Appointment Parser
     '''
     Parser function that will encompass the entire flow for parsing.
+
+    Note: this will have to be in a cron job/Celery beat task.
     '''
     @staticmethod
     def parse_type_a_appointments_from_emails():
