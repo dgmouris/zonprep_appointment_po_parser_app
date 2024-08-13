@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 
 from apps.utils.models import BaseModel
 
@@ -74,26 +75,13 @@ class ZonprepAppointment(BaseModel):
                 continue
 
             # save the email to the database.
+            appointment.save_raw_attachment(attachment)
+
+            # move the state to FULFILLMENT_RAW_ATTACHMENT_DOWNLOADED
+            appointment.state = ZonprepAppointmentState.FULFILLMENT_RAW_ATTACHMENT_DOWNLOADED
+            appointment.save()
 
             # parse the email
-
-    def get_type_a_appointment_email_attachment(self):
-        gmail_utils = GmailUtility()
-        query_string = self.get_gmail_attachment_query_string()
-
-        all_email = gmail_utils.search_emails(query_string, ['INBOX'])
-        # if there are no emails return early.
-        if not all_email:
-            return
-
-
-        # get the latest email with an attachment
-        all_email.reverse()
-        latest_email = all_email[0]
-
-        # get message detail
-        message_attachment = gmail_utils.get_message_attachment(latest_email)
-        return message_attachment
 
     # Helper methods.
     '''
@@ -120,6 +108,32 @@ class ZonprepAppointment(BaseModel):
 
     def get_gmail_attachment_query_string(self):
         return F"subject:{self.get_email_subject()} has:attachment"
+
+    def save_raw_attachment(self, attachment_bytes):
+        pdf_content = ContentFile(attachment_bytes)
+
+        self.raw_attachment_download.save(
+            F"{self.appointment_id}.pdf",
+            pdf_content
+        )
+
+    def get_type_a_appointment_email_attachment(self):
+        gmail_utils = GmailUtility()
+        query_string = self.get_gmail_attachment_query_string()
+
+        all_email = gmail_utils.search_emails(query_string, ['INBOX'])
+        # if there are no emails return early.
+        if not all_email:
+            return
+        # get the latest email with an attachment
+        all_email.reverse()
+        latest_email = all_email[0]
+
+        # get message detail
+        message_attachment = gmail_utils.get_message_attachment(latest_email)
+
+        # note that this is going to be in bytes.
+        return message_attachment
 
 
 '''
