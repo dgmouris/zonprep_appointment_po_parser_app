@@ -7,12 +7,15 @@ from apps.utils.models import BaseModel
 from .state import ZonprepAppointmentState
 from .gmail_utils import GmailUtility
 
+from .file_parsers.TypeAPDFParser import TypeAPDFParser
+
 
 class ZonprepAppointment(BaseModel):
     # appointment id given by the zonprep
     appointment_id = models.CharField(max_length=255)
     state = models.CharField(max_length=255)
     raw_attachment_download = models.FileField(upload_to='zonprep_appointment_attachments/', null=True, blank=True)
+    raw_parsed_attachment_json_field = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.appointment_id} - {self.state}"
@@ -81,7 +84,11 @@ class ZonprepAppointment(BaseModel):
             appointment.state = ZonprepAppointmentState.FULFILLMENT_RAW_ATTACHMENT_DOWNLOADED
             appointment.save()
 
-            # parse the email
+            # parse the email attachemnt and set the state to SUCCESSFUL_OCR_ATTACHMENT_PARSE
+            parsed_appointment_pdf_data = appointment.parse_appointment_pdf_to_dict()                        
+            appointment.raw_parsed_attachment_json_field = parsed_appointment_pdf_data
+            appointment.state = ZonprepAppointmentState.SUCCESSFUL_OCR_ATTACHMENT_PARSE
+            appointment.save()
 
     # Helper methods.
     '''
@@ -103,8 +110,6 @@ class ZonprepAppointment(BaseModel):
             message_text=subject
         )
         return message
-
-
 
     def get_gmail_attachment_query_string(self):
         return F"subject:{self.get_email_subject()} has:attachment"
@@ -135,14 +140,16 @@ class ZonprepAppointment(BaseModel):
         # note that this is going to be in bytes.
         return message_attachment
 
+    def parse_appointment_pdf_to_dict(self):
+        type_a_pdf_parser = TypeAPDFParser(self.raw_attachment_download.path)
+        type_a_pdf_parser_dict = type_a_pdf_parser.extract_text()
+        return type_a_pdf_parser_dict
 
 '''
 This singleton model is solely for the purpose of storing
 - external fulfillment email
 '''
 class SingletonModel(models.Model):
-    # Define your fields here
-
     class Meta:
         abstract = True
 
