@@ -106,7 +106,8 @@ class GmailUtility:
 
         try:
             service = build(API_SERVICE_NAME, API_VERSION, credentials=creds, static_discovery=False)
-            print(API_SERVICE_NAME, API_VERSION, 'service created successfully')
+            # This should be logged instead of printed
+            # print(API_SERVICE_NAME, API_VERSION, 'service created successfully')
             return service
         except Exception as e:
             print(e)

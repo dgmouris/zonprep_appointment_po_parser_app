@@ -17,6 +17,41 @@ class ZonprepAppointment(BaseModel):
     raw_attachment_download = models.FileField(upload_to='zonprep_appointment_attachments/', null=True, blank=True)
     raw_parsed_attachment_json_field = models.JSONField(null=True, blank=True)
 
+    # Note all of the parsed fields will have the prefix "p_" to denote that they are parsed fields.
+    p_appointment_date = models.CharField(max_length=255, null=True, blank=True)
+    p_appointment_id = models.CharField(max_length=255, null=True, blank=True)
+    p_appointment_type = models.CharField(max_length=255, null=True, blank=True)
+    p_carrier = models.CharField(max_length=255, null=True, blank=True)
+    p_carrier_request_delivery_date = models.CharField(max_length=255, null=True, blank=True)
+    p_cartons = models.CharField(max_length=255, null=True, blank=True)
+    p_dock_door = models.CharField(max_length=255, null=True, blank=True)
+    p_freight_terms = models.CharField(max_length=255, null=True, blank=True)
+    p_pallets = models.CharField(max_length=255, null=True, blank=True)
+    p_percent_needed = models.CharField(max_length=255, null=True, blank=True)
+    p_priority_type = models.CharField(max_length=255, null=True, blank=True)
+    p_trailer_number = models.CharField(max_length=255, null=True, blank=True)
+    p_truck_location = models.CharField(max_length=255, null=True, blank=True)
+    p_units = models.CharField(max_length=255, null=True, blank=True)
+
+    # mapping of the fields in the "raw_parsed_attachment_json_field" to the fields in the model.
+    PARSED_FIELDS_MAPPING = {
+        'Actual Arrival Date': 'p_appointment_date',
+        'Appointment Id': 'p_appointment_id',
+        'Appointment type': 'p_appointment_type',
+        'Carrier': 'p_carrier',
+        'Carrier request delivery time and date': 'p_carrier_request_delivery_date',
+        'Cartons': 'p_cartons',
+        'Dock Door': 'p_dock_door',
+        'Freight terms': 'p_freight_terms',
+        'Pallets': 'p_pallets',
+        'Percent needed': 'p_percent_needed',
+        'Priority type': 'p_priority_type',
+        'Schedule Date': 'p_appointment_date',
+        'Trailer Number': 'p_trailer_number',
+        'Truck location': 'p_truck_location',
+        'Units': 'p_units'
+    }
+
     def __str__(self):
         return f"{self.appointment_id} - {self.state}"
 
@@ -86,11 +121,17 @@ class ZonprepAppointment(BaseModel):
             appointment.state = ZonprepAppointmentState.FULFILLMENT_RAW_ATTACHMENT_DOWNLOADED
             appointment.save()
 
-            # parse the email attachemnt and set the state to SUCCESSFUL_OCR_ATTACHMENT_PARSE
+            # parse the email attachement and set the state to SUCCESSFUL_OCR_ATTACHMENT_PARSE
             parsed_appointment_pdf_data = appointment.parse_appointment_pdf_to_dict()                        
             appointment.raw_parsed_attachment_json_field = parsed_appointment_pdf_data
             appointment.state = ZonprepAppointmentState.SUCCESSFUL_OCR_ATTACHMENT_PARSE
             appointment.save()
+
+            # convert the and move the the state to SUCCESSFUL_APPOINTMENT_INFO_UPDATED
+            appointment.save_raw_parsed_appointment_fields_to_model()
+
+            # TODO: send the appointment data to salesforce
+            appointment.send_appointment_data_to_salesforce()
 
     # Helper methods.
     '''
@@ -146,6 +187,28 @@ class ZonprepAppointment(BaseModel):
         type_a_pdf_parser = TypeAPDFParser(self.raw_attachment_download.path)
         type_a_pdf_parser_dict = type_a_pdf_parser.extract_text()
         return type_a_pdf_parser_dict
+
+    def save_raw_parsed_appointment_fields_to_model(self):
+        appointment_data = self.raw_parsed_attachment_json_field.get('appointment_data', None)
+        # handle the case if it's not saved correctly.
+        if appointment_data is None:
+            self.state = ZonprepAppointmentState.ERROR_OCR_ATTACHMENT_PARSE
+            self.save()
+            return
+        # loop through the mapping and set the fields in the model.
+        for key, value in appointment_data.items():
+            if key in self.PARSED_FIELDS_MAPPING:
+                field_name = self.PARSED_FIELDS_MAPPING[key]
+                setattr(self, field_name, value)
+        self.state = ZonprepAppointmentState.SUCCESSFUL_APPOINTMENT_INFO_UPDATED
+        self.save()
+
+    '''
+    This function will send the appointment data to salesforce.
+    '''
+    def send_appointment_data_to_salesforce(self):
+        pass
+
 
 '''
 This singleton model is solely for the purpose of storing
