@@ -134,7 +134,19 @@ class TypeAPDFParser:
             for row_index, row in enumerate(table):
                 # handle the header row and skip it.
                 if row_index == HEADER_ROW_INDEX and table_index == HEADER_TABLE_INDEX:
-                    continue           
+                    continue
+
+                '''
+                Note sometimes when parsing the PDFs the first column in the row is empty.
+                if that is the case we need to pop the first column from the row.
+                Otherwise everything will be shifted by one field.
+
+                TODO: deal with the new table situation for a page,
+                as you might need those asns.
+                '''
+                if row[0] == "" or row[0] is None:
+                    row.pop(0)
+
                 row_data = {}
                 for column_index, column_data in enumerate(row):
                     if column_index not in PO_COLUMN_MAPPING.keys():
