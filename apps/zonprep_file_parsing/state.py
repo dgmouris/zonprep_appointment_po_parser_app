@@ -1,6 +1,14 @@
 from enum import Enum
 
 
+class ZonprepAppointmentTaskState(Enum):
+    RUNNING = "Running"
+    COMPLETED = "Completed"
+
+    def __str__(self):
+        return self.value
+
+
 class ZonprepAppointmentState(Enum):
     CREATED = "Created"
     SENT_TO_FULFILLMENT = "SentToFulfillment"

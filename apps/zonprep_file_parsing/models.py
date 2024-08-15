@@ -4,7 +4,7 @@ from django.core.files.base import ContentFile
 
 from apps.utils.models import BaseModel
 
-from .state import ZonprepAppointmentState, ZonprepPurchaseOrderState
+from .state import ZonprepAppointmentState, ZonprepPurchaseOrderState, ZonprepAppointmentTaskState
 from .gmail_utils import GmailUtility
 
 from .file_parsers.TypeAPDFParser import TypeAPDFParser
@@ -367,3 +367,50 @@ class ExternalFulfillmentEmail(SingletonModel):
 
     def __str__(self) -> str:
         return F"External fulfillment email: {self.email}"
+
+
+# This is a model that will store if the task is running or not
+# it will also store the last time it was run.
+# it will also store the result of an error for debugging purposes
+# as I want to know what the error was.
+class ZonprepAppointmentTask(BaseModel):
+    # there's two types of tasks that can be run
+    PARSING_TYPE_A_APPOINTMENTS_TASK = "ParsingTypeAAppointments"
+    SEND_APPOINTMENT_EMAILS_TASK = "SendAppointmentEmails"
+    
+    task_name = models.CharField(max_length=255)
+    state = models.CharField(max_length=255) # ZonprepAppointmentTaskState
+    successful = models.BooleanField(default=False, null=True, blank=True)
+    error_details = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        if self.state == ZonprepAppointmentTaskState.RUNNING:
+            return F"Task: {self.task_name} State: {self.task_name}, last run started: {self.created_at}"
+        return F"Task: {self.task_name} State: {self.state}, Successful: {self.successful}, last run started: {self.created_at}"
+    
+    @staticmethod
+    def is_running(task_name):
+        # if it doesn't exist just send them the completed state.
+        existing = ZonprepAppointmentTask.objects.filter(task_name=task_name).exists()
+        if not existing:
+            return False
+        latest_object = ZonprepAppointmentTask.objects.filter(task_name=task_name).latest('created_at')
+        if latest_object:
+            return latest_object.state == ZonprepAppointmentTaskState.RUNNING
+        else:
+            return False # there are no tasks at all.
+
+    @staticmethod
+    def set_start_task(task_name):
+        ZonprepAppointmentTask.objects.create(
+            task_name=task_name,
+            state=ZonprepAppointmentTaskState.RUNNING
+        )
+
+    @staticmethod
+    def set_end_task(task_name, successful=None, error_details=None):
+        latest_object = ZonprepAppointmentTask.objects.filter(task_name=task_name).latest('created_at')
+        latest_object.state = ZonprepAppointmentTaskState.COMPLETED
+        latest_object.successful = successful
+        latest_object.error_details = error_details
+        latest_object.save()
