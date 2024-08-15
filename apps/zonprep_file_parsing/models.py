@@ -4,7 +4,7 @@ from django.core.files.base import ContentFile
 
 from apps.utils.models import BaseModel
 
-from .state import ZonprepAppointmentState
+from .state import ZonprepAppointmentState, ZonprepPurchaseOrderState
 from .gmail_utils import GmailUtility
 
 from .file_parsers.TypeAPDFParser import TypeAPDFParser
@@ -33,7 +33,7 @@ class ZonprepAppointment(BaseModel):
     p_truck_location = models.CharField(max_length=255, null=True, blank=True)
     p_units = models.CharField(max_length=255, null=True, blank=True)
 
-    # mapping of the fields in the "raw_parsed_attachment_json_field" to the fields in the model.
+    # mapping of the fields in the "parse_appointment_pdf_to_dict" to the fields in the model.
     PARSED_FIELDS_MAPPING = {
         'Actual Arrival Date': 'p_appointment_date',
         'Appointment Id': 'p_appointment_id',
@@ -55,7 +55,11 @@ class ZonprepAppointment(BaseModel):
     def __str__(self):
         return f"{self.appointment_id} - {self.state}"
 
-
+    '''
+    This is the function create appointments.
+    
+    Note: don't create ZonprepAppointments another way.
+    '''
     @staticmethod
     def create_appointment(appointment_id):
         appointment, _ =ZonprepAppointment.objects.get_or_create(
@@ -130,6 +134,9 @@ class ZonprepAppointment(BaseModel):
             # convert the and move the the state to SUCCESSFUL_APPOINTMENT_INFO_UPDATED
             appointment.save_raw_parsed_appointment_fields_to_model()
 
+            # create all of the purchase orders associated with this appointment.
+            appointment.create_all_pos_from_raw_parsed_fields()
+
             # TODO: send the appointment data to salesforce
             appointment.send_appointment_data_to_salesforce()
 
@@ -188,6 +195,9 @@ class ZonprepAppointment(BaseModel):
         type_a_pdf_parser_dict = type_a_pdf_parser.extract_text()
         return type_a_pdf_parser_dict
 
+    '''
+    Taking the appointment raw data and saving it to the appointment model.
+    '''
     def save_raw_parsed_appointment_fields_to_model(self):
         appointment_data = self.raw_parsed_attachment_json_field.get('appointment_data', None)
         # handle the case if it's not saved correctly.
@@ -204,11 +214,129 @@ class ZonprepAppointment(BaseModel):
         self.save()
 
     '''
+    Taking the po raw data and creating po models from it, joined by a foreign key to this model.
+    '''
+    def create_all_pos_from_raw_parsed_fields(self):
+        raw_all_pos_data = self.raw_parsed_attachment_json_field.get('po_data', None)
+        # Note: we'll have to handle the case to differentiate between a coule 
+        if raw_all_pos_data is None:
+            self.state = ZonprepAppointmentState.ERROR_OCR_ATTACHMENT_PARSE
+            self.save()
+            return
+
+        # note that this is actually shipment data and we're going to have to
+        # breakout the pos from it and create multiple from one line.
+        # this is taken care of in the ZonprepPurchaseOrder.create_po_model_from_raw_po_fields method. 
+        for raw_po_data in raw_all_pos_data:
+            ZonprepPurchaseOrder.create_po_model_from_raw_po_fields(self, raw_po_data)
+
+    '''
     This function will send the appointment data to salesforce.
     '''
     def send_appointment_data_to_salesforce(self):
         pass
 
+
+class ZonprepPurchaseOrder(BaseModel):
+    appointment = models.ForeignKey(
+        ZonprepAppointment,
+        on_delete=models.CASCADE,
+        related_name='purchase_orders'
+    )
+    state = models.CharField(max_length=255)
+
+    # parsed fiels prepended with p_
+    p_shipment_id = models.CharField(max_length=255, null=True, blank=True)
+    p_pallets = models.CharField(max_length=255, null=True, blank=True)
+    p_cartons = models.CharField(max_length=255, null=True, blank=True)
+    p_units = models.CharField(max_length=255, null=True, blank=True)
+    p_po_number = models.CharField(max_length=255, null=True, blank=True)
+    p_pro = models.CharField(max_length=255, null=True, blank=True)
+    p_bols = models.CharField(max_length=255, null=True, blank=True)
+    p_asn = models.CharField(max_length=255, null=True, blank=True)
+    p_arn = models.TextField(null=True, blank=True)
+    p_freight_terms = models.CharField(max_length=255, null=True, blank=True)
+    p_vendor = models.CharField(max_length=255, null=True, blank=True)
+    p_shipment_label = models.CharField(max_length=255, null=True, blank=True)
+
+    PARSED_FIELDS_MAPPING = {
+        "shipment_id": "p_shipment_id",
+        "pallets": "p_pallets",
+        "cartons": "p_cartons",
+        "units": "p_units",
+        "pos": "p_po_number",
+        "pro": "p_pro",
+        "bols": "p_bols",
+        "ASNs": "p_asn",
+        "ARN": "p_arn",
+        "freight_terms": "p_freight_terms",
+        "vendor": "p_vendor",
+        "shipment_label": "p_shipment_label"
+    }
+
+    def __str__(self):
+        return F"PO: {self.p_po_number}, Appointment: {self.appointment}"
+    
+    '''
+    This function is going to be used in the parser to create the purchase orders.
+
+    Please take a look at parse_type_a_appointments_from_emails in the ZonprepAppointment model
+
+    Note: don't create ZonprepPurchaseOrders another way.
+    '''
+    @staticmethod
+    def create_po_model_from_raw_po_fields(appointment, raw_po_data):
+        # note that pos is a list of numbers so we'll be creating multiple for each.
+        all_pos = raw_po_data.get('pos', [""])
+        # same with bols
+        all_bols = raw_po_data.get('bols', [""])
+        # same with asns
+        all_asns = raw_po_data.get('ASNs', [""])
+        
+        # if there are no pos we're just going to skip them
+        if all_pos[0] == "":
+            return
+
+        # loop through the pos and create a model for each.
+        for index, po in enumerate(all_pos):
+            # get the current bol or the first one if it doesn't exist.
+            bol = ZonprepPurchaseOrder.get_item_or_first(all_bols, index)
+            asn = ZonprepPurchaseOrder.get_item_or_first(all_asns, index)
+            
+            # this is going to map the data to the fields for the model.
+            mapping = ZonprepPurchaseOrder.PARSED_FIELDS_MAPPING
+            po_data = {
+                mapping["shipment_id"]: raw_po_data.get("shipment_id", ""),
+                mapping["pallets"]: raw_po_data.get("pallets", ""),
+                mapping["cartons"]: raw_po_data.get("cartons", ""),
+                mapping["units"]: raw_po_data.get("units", ""),
+                mapping["pos"]: po,
+                mapping["pro"]: raw_po_data.get("pro", ""),
+                mapping["bols"]: bol,
+                mapping["ASNs"]: asn,
+                mapping["ARN"]: raw_po_data.get("ARN", ""),
+                mapping["freight_terms"]: raw_po_data.get("freight_terms", ""),
+                mapping["vendor"]: raw_po_data.get("vendor", ""),
+                mapping["shipment_label"]: raw_po_data.get("shipment_label", "")
+            }
+
+            # unpack the data into a model.
+            zonprep_purchase_order = ZonprepPurchaseOrder.objects.create(
+                appointment=appointment,
+                state=ZonprepPurchaseOrderState.CREATED_WITH_PARSED_FIELDS,
+                **po_data 
+            )
+
+            # log something here in the future.
+            print(F"Created PO: {zonprep_purchase_order}")
+
+    # Helper methods.
+    @staticmethod
+    def get_item_or_first(my_list, index):
+        try:
+            return my_list[index]
+        except IndexError:
+            return my_list[0]
 
 '''
 This singleton model is solely for the purpose of storing

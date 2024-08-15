@@ -18,10 +18,14 @@ class ZonprepAppointmentState(Enum):
     def __str__(self):
         return self.value
     
+class ZonprepPurchaseOrderState(Enum):
+    CREATED_WITH_PARSED_FIELDS = "CreatedWithParsedFields"
 
+    def __str__(self):
+        return self.value
 
 '''
-Note on the above.
+Notes on the above.
 States are used to keep track of what step an appointment is in.
 
 - Created
