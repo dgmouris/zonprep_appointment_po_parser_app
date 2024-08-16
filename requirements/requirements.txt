@@ -16,6 +16,8 @@ attrs==24.1.0
     #   referencing
 billiard==4.2.0
     # via celery
+brotli==1.1.0
+    # via whitenoise
 cachetools==5.4.0
     # via google-auth
 celery[redis]==5.4.0
@@ -224,3 +226,5 @@ vine==5.1.0
     #   kombu
 wcwidth==0.2.13
     # via prompt-toolkit
+whitenoise[brotli]==6.7.0
+    # via -r requirements/requirements.in
