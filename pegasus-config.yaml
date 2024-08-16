@@ -1,5 +1,5 @@
 default_context:
-  _pegasus_version: '2024.8'
+  _pegasus_version: 2024.8.1
   ai_chat_mode: none
   ai_image_mode: none
   author_name: Daniel Mouris
@@ -7,7 +7,7 @@ default_context:
   css_framework: tailwind
   css_theme: default
   database: postgres
-  deploy_platform: none
+  deploy_platform: kamal
   description: ZonPrepsOc
   docker_setup: default
   domain_name: localhost:8000

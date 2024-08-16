@@ -63,6 +63,7 @@ THIRD_PARTY_APPS = [
     "celery_progress",
     "hijack",  # "login as" functionality
     "hijack.contrib.admin",  # hijack buttons in the admin
+    "whitenoise.runserver_nostatic",  # whitenoise runserver
     "waffle",
     "django_celery_beat",
 ]
@@ -79,6 +80,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PROJECT_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -246,8 +248,8 @@ STORAGES = {
     "staticfiles": {
         # swap these to use manifest storage to bust cache when files change
         # note: this may break image references in sass/css files which is why it is not enabled by default
-        # "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        # "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 

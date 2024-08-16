@@ -62,14 +62,16 @@ it is installed and running.
 You can run it using:
 
 ```bash
-celery -A zon_prep_ocr_project worker -l INFO
+celery -A zon_prep_ocr_project worker -l INFO --pool=solo
 ```
 
 Or with celery beat (for scheduled tasks):
 
 ```bash
-celery -A zon_prep_ocr_project worker -l INFO -B
+celery -A zon_prep_ocr_project worker -l INFO -B --pool=solo
 ```
+
+Note: Using the `solo` pool is recommended for development but not for production.
 
 ## Updating translations
 
