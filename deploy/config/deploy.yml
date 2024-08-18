@@ -1,6 +1,6 @@
 service: zon_prep_ocr_project
 
-image: <namespace>/zon_prep_ocr_project
+image: developmentzonprep/zon_prep_ocr_project
 
 env:
   # This is the minimal set of environment variables needed to run the app
@@ -19,19 +19,19 @@ env:
 servers:
   web:
     hosts:
-      - <IP-ADDRESS>
+      - 35.245.54.153
     options:
       expose: "8000"
       network: zon_prep_ocr_project-network
     labels:
-      traefik.http.routers.zon_prep_ocr_project.rule: Host(`localhost:8000`)
+      traefik.http.routers.zon_prep_ocr_project.rule: Host(`35.245.54.153`)
       traefik.http.routers.zon_prep_ocr_project_secure.entrypoints: websecure
-      traefik.http.routers.zon_prep_ocr_project_secure.rule: Host(`localhost:8000`)
+      traefik.http.routers.zon_prep_ocr_project_secure.rule: Host(`35.245.54.153`)
       traefik.http.routers.zon_prep_ocr_project_secure.tls: true
       traefik.http.routers.zon_prep_ocr_project_secure.tls.certresolver: letsencrypt
   celery:
     hosts:
-      - <IP-ADDRESS>
+      - 35.245.54.153
     cmd: celery -A zon_prep_ocr_project worker -l INFO --concurrency 2
     options:
       network: zon_prep_ocr_project-network
@@ -39,7 +39,7 @@ servers:
       traefik.enable: "false"
   celerybeat:
     hosts:
-      - <IP-ADDRESS>
+      - 35.245.54.153
     cmd: celery -A zon_prep_ocr_project beat -l INFO
     options:
       network: zon_prep_ocr_project-network
@@ -66,7 +66,7 @@ builder:
 
 # See https://kamal-deploy.org/docs/configuration#using-another-registry-than-docker-hub
 registry:
-  username: <DOCKER REGISTRY USERNAME>
+  username: developmentzonprep
   password:
     - KAMAL_REGISTRY_PASSWORD
 
@@ -74,7 +74,7 @@ accessories:
   # docker hostname will be 'zon_prep_ocr_project-postgres'
   postgres:
     image: postgres
-    host: <IP-ADDRESS>
+    host: 35.245.54.153
     directories:
       - data:/var/lib/postgresql/data
     options:
@@ -85,10 +85,10 @@ accessories:
         POSTGRES_DB: zon_prep_ocr_project
       secret:
         - POSTGRES_PASSWORD
-  ## docker hostname will be 'zon_prep_ocr_project-redis'
+  # docker hostname will be 'zon_prep_ocr_project-redis'
   redis:
     image: redis
-    host: <IP-ADDRESS>
+    host: 35.245.54.153
     options:
       network: zon_prep_ocr_project-network
 
