@@ -71,20 +71,8 @@ registry:
     - KAMAL_REGISTRY_PASSWORD
 
 accessories:
-  # docker hostname will be 'zon_prep_ocr_project-postgres'
-  postgres:
-    image: postgres
-    host: 35.245.54.153
-    directories:
-      - data:/var/lib/postgresql/data
-    options:
-      network: zon_prep_ocr_project-network
-    env:
-      clear:
-        POSTGRES_USER: zon_prep_ocr_project
-        POSTGRES_DB: zon_prep_ocr_project
-      secret:
-        - POSTGRES_PASSWORD
+  # Note: Removed the database because it's going to be using
+  # an external service take a look at the env to see the connection string.
   # docker hostname will be 'zon_prep_ocr_project-redis'
   redis:
     image: redis
