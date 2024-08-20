@@ -8,6 +8,7 @@ import os
 import datetime
 from collections import namedtuple
 from google_auth_oauthlib.flow import InstalledAppFlow
+
 import json
 from email.mime.text import MIMEText
 from googleapiclient.errors import HttpError
@@ -37,9 +38,6 @@ class NoEmailsFound(GmailException):
 
 class GmailUtility:
     def __init__(self, user_id=None):
-        if not user_id:
-            user_id = 'me'
-        self.user_id = user_id
         
         api_name = 'gmail'
         api_version = 'v1'
@@ -56,6 +54,16 @@ class GmailUtility:
         self.service = self.create_service(
             **service_data
         )
+        # set the user_id to the creds instance created above.
+        if not user_id:
+            user_id = self.gmail_token_creds.gmail_user_id
+        self.user_id = user_id
+
+    def _get_creds_instance(self):
+        from .models import GmailTokenCredentials
+        creds = GmailTokenCredentials.load()
+        self.gmail_token_creds = creds
+        return creds
 
     # connect to gmail and create the service so that you can make api calls.
     def create_service(
@@ -67,9 +75,11 @@ class GmailUtility:
             scopes=None,
             prefix=''
         ):
-        CLIENT_SECRET_FILE = client_secret_file
-        CLIENT_SECRET_JSON = client_secret_json
-        client_secret = json.loads(CLIENT_SECRET_JSON)
+
+        gmail_token_creds = self._get_creds_instance()
+        
+        # client_secret = json.loads(CLIENT_SECRET_JSON)
+        client_secret = gmail_token_creds.secret_credentials
 
         API_SERVICE_NAME = api_name
         API_VERSION = api_version
@@ -80,26 +90,20 @@ class GmailUtility:
         token_dir = 'gmail_token_files'
         token_file = f'token_{API_SERVICE_NAME}_{API_VERSION}{prefix}.json'
 
-
-        ### TODO move the token to a singleton django model.
-        
-        ### Check if token dir exists first, if not, create the folder
-        if not os.path.exists(os.path.join(working_dir, token_dir)):
-            os.mkdir(os.path.join(working_dir, token_dir))
-
-        if os.path.exists(os.path.join(working_dir, token_dir, token_file)):
-            creds = Credentials.from_authorized_user_file(os.path.join(working_dir, token_dir, token_file), SCOPES)
+        # get the credentails from the token in the database.
+        creds = Credentials.from_authorized_user_info(gmail_token_creds.token, scopes=SCOPES)
 
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
                 flow = None
-                if CLIENT_SECRET_FILE:
-                    flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
-                elif CLIENT_SECRET_JSON:
-                    flow = InstalledAppFlow.from_client_config(client_secret, SCOPES)
+                flow = InstalledAppFlow.from_client_config(client_secret, SCOPES)
                 creds = flow.run_local_server(port=0)
+
+            # write to database.
+            creds_dict = json.loads(creds.to_json())
+            gmail_token_creds.update_token(creds_dict)
 
             with open(os.path.join(working_dir, token_dir, token_file), 'w') as token:
                 token.write(creds.to_json())
@@ -112,7 +116,7 @@ class GmailUtility:
         except Exception as e:
             print(e)
             print(f'Failed to create service instance for {API_SERVICE_NAME}')
-            os.remove(os.path.join(working_dir, token_dir, token_file))
+            # os.remove(os.path.join(working_dir, token_dir, token_file))
             return None
 
     def search_emails(self, query_string: str, label_ids: List):
@@ -174,8 +178,11 @@ class GmailUtility:
         raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
         return {'raw': raw_message}
 
-    def send_email(self, sender, to, subject, message_text):
+    def send_email(self, sender=None, to=None, subject=None, message_text=None):
         """Create a message for an email."""
+        if sender is None:
+            sender = self.gmail_token_creds.gmail_user_id
+        
         message = MIMEText(message_text)
         message['to'] = to
         message['from'] = sender

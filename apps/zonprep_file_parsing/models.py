@@ -154,7 +154,6 @@ class ZonprepAppointment(BaseModel):
 
         subject = self.get_email_subject()
         message = gmail_utils.send_email(
-            sender='steve.sheets@gmail.com',
             to=external_fulfillment.email,
             subject=subject,
             message_text=subject
@@ -368,6 +367,21 @@ class ExternalFulfillmentEmail(SingletonModel):
     def __str__(self) -> str:
         return F"External fulfillment email: {self.email}"
 
+
+class GmailTokenCredentials(SingletonModel):
+    secret_credentials = models.JSONField(null=True, blank=True)
+    token = models.JSONField(null=True, blank=True)
+    gmail_user_id = models.CharField(max_length=255)
+    
+    def __str__(self) -> str:
+        return F"Gmail User ID: {self.gmail_user_id}, Token"
+
+    # token needs to be json.
+    def update_token(self, token):
+        breakpoint()
+        self.token = token
+        self.save()
+    
 
 # This is a model that will store if the task is running or not
 # it will also store the last time it was run.
