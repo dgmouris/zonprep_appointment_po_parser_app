@@ -61,12 +61,15 @@ class ZonprepAppointment(BaseModel):
     Note: don't create ZonprepAppointments another way.
     '''
     @staticmethod
-    def create_appointment(appointment_id):
+    def create_appointment(appointment_id, appointment_state=None):
         appointment, _ =ZonprepAppointment.objects.get_or_create(
             appointment_id=appointment_id,
         )
+        if appointment_state is None:
+            appointment_state = ZonprepAppointmentState.CREATED
+
         if appointment.state == "":
-            appointment.state = ZonprepAppointmentState.CREATED
+            appointment.state = appointment_state
             appointment.save()
         created = appointment.state == ZonprepAppointmentState.CREATED
         return appointment, created

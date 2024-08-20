@@ -5,6 +5,11 @@ class ZonprepAppointmentCSVUploadForm(forms.Form):
         label='Upload CSV file',
         widget=forms.FileInput(attrs={'accept': '.csv'}),
     )
+    send_to_external_fullfillment = forms.BooleanField(
+        label='Send to External Fullfillment',
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+    )
 
     def clean_csv_file(self):
         csv_file = self.cleaned_data['csv_file']

@@ -18,8 +18,12 @@ def home(request):
         if zonprep_form.is_valid():
             # Process the form data
             csv_file = zonprep_form.cleaned_data['csv_file']
+            send_to_external_fullfillment = zonprep_form.cleaned_data['send_to_external_fullfillment']
+            
             # process the csv file
-            results = process_csv(csv_file)
+            # only send it if it's in the correct state.
+            results = process_csv(csv_file,
+                                  send_to_external_fullfillment=send_to_external_fullfillment)
             created_appointments = results['created_appointments']
             already_created_appointments = results['already_created_appointments']
             submitted = True
