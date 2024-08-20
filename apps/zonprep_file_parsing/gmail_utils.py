@@ -90,8 +90,11 @@ class GmailUtility:
         token_dir = 'gmail_token_files'
         token_file = f'token_{API_SERVICE_NAME}_{API_VERSION}{prefix}.json'
 
+        # handle the null case for tokens.
+        creds = None
+        if gmail_token_creds.token is not None:
         # get the credentails from the token in the database.
-        creds = Credentials.from_authorized_user_info(gmail_token_creds.token, scopes=SCOPES)
+            creds = Credentials.from_authorized_user_info(gmail_token_creds.token, scopes=SCOPES)
 
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
