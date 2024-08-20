@@ -350,7 +350,7 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 PROJECT_METADATA = {
     "NAME": gettext_lazy("ZonPrep OCR Parser."),
     "URL": "http://localhost:8000",
-    "DESCRIPTION": gettext_lazy("ZonPrepsOc"),
+    "DESCRIPTION": gettext_lazy("Internal application to download attachments and OCR data."),
     "IMAGE": "https://upload.wikimedia.org/wikipedia/commons/2/20/PEO-pegasus_black.svg",
     "KEYWORDS": "SaaS, django",
     "CONTACT_EMAIL": "dgmouris@gmail.com",

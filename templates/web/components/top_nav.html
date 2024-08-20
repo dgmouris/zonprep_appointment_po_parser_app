@@ -28,9 +28,6 @@
   <div class="navbar-end">
     {% if user.is_authenticated %}
     {% else %}
-    <a href="{% url 'account_signup' %}" class="btn btn-primary">
-      {% translate "Sign Up" %}
-    </a>
     <a href="{% url 'account_login' %}" class="btn btn-outline ml-2">
       {% translate "Sign In" %}
     </a>
