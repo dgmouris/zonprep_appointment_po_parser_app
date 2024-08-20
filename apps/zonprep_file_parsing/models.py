@@ -378,7 +378,6 @@ class GmailTokenCredentials(SingletonModel):
 
     # token needs to be json.
     def update_token(self, token):
-        breakpoint()
         self.token = token
         self.save()
     
