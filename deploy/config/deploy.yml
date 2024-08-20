@@ -24,9 +24,9 @@ servers:
       expose: "8000"
       network: zon_prep_ocr_project-network
     labels:
-      traefik.http.routers.zon_prep_ocr_project.rule: Host(`35.245.54.153`)
+      traefik.http.routers.zon_prep_ocr_project.rule: Host(`testing-zonprep.dgmouris.com`)
       traefik.http.routers.zon_prep_ocr_project_secure.entrypoints: websecure
-      traefik.http.routers.zon_prep_ocr_project_secure.rule: Host(`35.245.54.153`)
+      traefik.http.routers.zon_prep_ocr_project_secure.rule: Host(`testing-zonprep.dgmouris.com`)
       traefik.http.routers.zon_prep_ocr_project_secure.tls: true
       traefik.http.routers.zon_prep_ocr_project_secure.tls.certresolver: letsencrypt
   celery:
@@ -90,7 +90,7 @@ traefik:
   args:
     entryPoints.web.address: ":80"
     entryPoints.websecure.address: ":443"
-    certificatesResolvers.letsencrypt.acme.email: "dgmouris@gmail.com"
+    certificatesResolvers.letsencrypt.acme.email: "development@zonprep.com"
     certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
     certificatesResolvers.letsencrypt.acme.httpchallenge: true
     certificatesResolvers.letsencrypt.acme.httpchallenge.entrypoint: web
