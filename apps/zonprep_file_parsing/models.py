@@ -161,7 +161,8 @@ class ZonprepAppointment(BaseModel):
         return message
 
     def get_gmail_attachment_query_string(self):
-        return F"subject:{self.get_email_subject()} has:attachment"
+        # note: I only need to have the appointment id as the subject.
+        return F"subject:{self.appointment_id} has:attachment"
 
     def save_raw_attachment(self, attachment_bytes):
         pdf_content = ContentFile(attachment_bytes)
