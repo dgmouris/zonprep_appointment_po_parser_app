@@ -158,8 +158,9 @@ class SalesforceUtils:
                 'Vendor__c': po.p_vendor
             }
             list_of_new_records.append(record)
-        
-        result = self.instance.bulk.POs__c.insert(list_of_new_records)
+        result = []
+        if len(list_of_new_records) > 0:
+            result = self.instance.bulk.POs__c.insert(list_of_new_records)
         
         # insert the existing records into the list.
         if len(list_of_existing) > 0:

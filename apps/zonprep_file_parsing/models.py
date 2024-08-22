@@ -250,6 +250,7 @@ class ZonprepAppointment(BaseModel):
             created, success, data = sf.create_appointment(self)
             if created and success:
                 self.state = ZonprepAppointmentState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED
+                self.save()
                 return created, data
             elif not created and success:
                 self.state = ZonprepAppointmentState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED
@@ -257,6 +258,7 @@ class ZonprepAppointment(BaseModel):
                     "message": F"Appointment {self.appointment_id} Already exists in salesforce",
                     "sf_appointment_id": None
                 }
+                self.save()
                 return created, data
             else:
                 self.state = ZonprepAppointmentState.ERROR_SALESFORCE_APPOINTMENT_DATA_UPLOADED
