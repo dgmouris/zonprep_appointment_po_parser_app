@@ -28,6 +28,8 @@ class ZonprepAppointmentState(Enum):
     
 class ZonprepPurchaseOrderState(Enum):
     CREATED_WITH_PARSED_FIELDS = "CreatedWithParsedFields"
+    SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED = "SuccessSalesforceAppointmentDataUploaded"
+    ERROR_SALESFORCE_APPOINTMENT_DATA_UPLOADED = "ErrorSalesforceAppointmentDataUploaded"
 
     def __str__(self):
         return self.value

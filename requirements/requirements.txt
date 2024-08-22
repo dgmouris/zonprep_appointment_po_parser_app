@@ -14,6 +14,7 @@ attrs==24.1.0
     # via
     #   jsonschema
     #   referencing
+    #   zeep
 billiard==4.2.0
     # via celery
 brotli==1.1.0
@@ -123,12 +124,18 @@ idna==3.7
     # via requests
 inflection==0.5.1
     # via drf-spectacular
+isodate==0.6.1
+    # via zeep
 jsonschema==4.23.0
     # via drf-spectacular
 jsonschema-specifications==2023.12.1
     # via jsonschema
 kombu==5.3.7
     # via celery
+lxml==5.3.0
+    # via zeep
+more-itertools==10.4.0
+    # via simple-salesforce
 oauthlib==3.2.2
     # via requests-oauthlib
 packaging==24.1
@@ -139,6 +146,8 @@ pdfplumber==0.11.3
     # via -r requirements/requirements.in
 pillow==10.4.0
     # via pdfplumber
+platformdirs==4.2.2
+    # via zeep
 prompt-toolkit==3.0.47
     # via click-repl
 proto-plus==1.24.0
@@ -159,7 +168,9 @@ pyasn1-modules==0.4.0
 pycparser==2.22
     # via cffi
 pyjwt[crypto]==2.9.0
-    # via django-allauth
+    # via
+    #   django-allauth
+    #   simple-salesforce
 pyparsing==3.1.2
     # via httplib2
 pypdfium2==4.30.0
@@ -172,6 +183,8 @@ python-dateutil==2.9.0.post0
     # via
     #   celery
     #   python-crontab
+pytz==2024.1
+    # via zeep
 pyyaml==6.0.1
     # via drf-spectacular
 qrcode==7.4.2
@@ -187,25 +200,38 @@ requests==2.32.3
     #   django-allauth
     #   django-anymail
     #   google-api-core
+    #   requests-file
     #   requests-oauthlib
+    #   requests-toolbelt
+    #   simple-salesforce
+    #   zeep
+requests-file==2.1.0
+    # via zeep
 requests-oauthlib==2.0.0
     # via
     #   django-allauth
     #   google-auth-oauthlib
+requests-toolbelt==1.0.0
+    # via zeep
 rpds-py==0.19.1
     # via
     #   jsonschema
     #   referencing
 rsa==4.9
     # via google-auth
+simple-salesforce==1.12.6
+    # via -r requirements/requirements.in
 six==1.16.0
-    # via python-dateutil
+    # via
+    #   isodate
+    #   python-dateutil
 sqlparse==0.5.1
     # via django
 typing-extensions==4.12.2
     # via
     #   asgiref
     #   qrcode
+    #   simple-salesforce
 tzdata==2024.1
     # via
     #   celery
@@ -228,3 +254,5 @@ wcwidth==0.2.13
     # via prompt-toolkit
 whitenoise[brotli]==6.7.0
     # via -r requirements/requirements.in
+zeep==4.2.1
+    # via simple-salesforce

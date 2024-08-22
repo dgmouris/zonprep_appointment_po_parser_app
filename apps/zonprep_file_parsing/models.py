@@ -6,6 +6,7 @@ from apps.utils.models import BaseModel
 
 from .state import ZonprepAppointmentState, ZonprepPurchaseOrderState, ZonprepAppointmentTaskState
 from .gmail_utils import GmailUtility
+from .salesforce_utils import SalesforceUtils, SalesForceCreateError
 
 from .file_parsers.TypeAPDFParser import TypeAPDFParser
 
@@ -140,8 +141,11 @@ class ZonprepAppointment(BaseModel):
             # create all of the purchase orders associated with this appointment.
             appointment.create_all_pos_from_raw_parsed_fields()
 
-            # TODO: send the appointment data to salesforce
-            appointment.send_appointment_data_to_salesforce()
+            # create the appointment in salesforce
+            appointment.create_appointment_in_salesforce()
+
+            # create the purchase orders in salesforce
+            appointment.create_purchase_orders_in_salesforce()
 
     # Helper methods.
     '''
@@ -235,9 +239,93 @@ class ZonprepAppointment(BaseModel):
 
     '''
     This function will send the appointment data to salesforce.
+    returns 
+        created: bool
+        success: bool
+        data: dict with message and sf_appointment_id
     '''
-    def send_appointment_data_to_salesforce(self):
-        pass
+    def create_appointment_in_salesforce(self):
+        sf = SalesforceUtils()
+        try:
+            created, success, data = sf.create_appointment(self)
+            if created and success:
+                self.state = ZonprepAppointmentState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED
+                return created, data
+            elif not created and success:
+                self.state = ZonprepAppointmentState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED
+                data = {
+                    "message": F"Appointment {self.appointment_id} Already exists in salesforce",
+                    "sf_appointment_id": None
+                }
+                return created, data
+            else:
+                self.state = ZonprepAppointmentState.ERROR_SALESFORCE_APPOINTMENT_DATA_UPLOADED
+                data = {
+                    "message": "Error creating appointment in salesforce",
+                    "sf_appointment_id": None
+                }
+                return False, data
+        except SalesForceCreateError as e:
+            self.state = ZonprepAppointmentState.ERROR_SALESFORCE_APPOINTMENT_DATA_UPLOADED
+            self.save()    
+            data = {
+                "message": "Error creating appointment in salesforce",
+                "sf_appointment_id": None
+            }
+            return False, data
+
+
+    '''
+    This function will loop through the purchase orders and add them in salesforce.
+    returns: list:
+        dict:
+            created: bool
+            success: bool
+            message: str
+    '''
+    def create_purchase_orders_in_salesforce(self, sf_appointment_id=None):
+        sf = SalesforceUtils()
+        all_pos = self.purchase_orders.all()
+
+        # values returned from the function
+        return_values = []
+        try:
+            # create all the pos in salesforce
+            result = sf.create_purchase_orders(self, sf_appointment_id)
+
+            # loop through the results and update the state of the purchase orders.
+            # the index corresponds to the index of the purchase order added in.
+            for index, po in enumerate(all_pos):
+                sf_result_for_po = result[index]
+
+                if sf_result_for_po["created"] and sf_result_for_po["success"]:
+                    po.state = ZonprepPurchaseOrderState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED
+                    po.save()
+                    return_values.append({
+                        "created": True,
+                        "message": F"PO: {po.p_po_number} created in salesforce with id {sf_result_for_po['id']}"
+                    })
+                elif not sf_result_for_po["created"] and sf_result_for_po["success"]:
+                    po.state = ZonprepPurchaseOrderState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED
+                    po.save()
+                    return_values.append({
+                        "created": False,
+                        "message": F"PO: {po.p_po_number} already present in salesforce with id {sf_result_for_po['id']}"
+                    })
+                else:
+                    po.state = ZonprepPurchaseOrderState.ERROR_SALESFORCE_APPOINTMENT_DATA_UPLOADED
+                    po.save()
+                    return_values.append({
+                        "created": False,
+                        "message": F"Error in creating PO: {po.p_po_number} in salesforce"
+                    })
+        except SalesForceCreateError as e:
+            return_values.append({
+                "created": False,
+                "message": F"Error in creating PO: {po.p_po_number} in salesforce"
+            })
+
+        return return_values
 
 
 class ZonprepPurchaseOrder(BaseModel):
