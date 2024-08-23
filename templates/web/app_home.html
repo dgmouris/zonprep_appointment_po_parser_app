@@ -1,19 +1,25 @@
 {% extends "web/app/app_base.html" %}
 {% load i18n %}
 {% load static %}
+{% block page_js %}
+  <script src="{% static 'js/app-bundle.js' %}"></script>
+{% endblock page_js %}
 {% load form_tags %}
 {% block app %}
-<section class="app-card">
+<!-- <section class="app-card">
     <div class="pg-columns pg-columns-reversed pg-align-items-center">
         <div class="pg-column">
             <h1 class="pg-title">{% translate "Welcome to ZonPrep OCR Parser" %}</h1>
         </div>
     </div>
+</section> -->
+
+<section class="app-card">
+    <div id="front-end-react-app"></div>
 </section>
 <section class="app-card">
     <div class="pg-content">
         <p>Upload CSV with Appointment ids as the only column.</p>
-
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             {{ zonprep_form.non_field_errors }}
@@ -34,6 +40,10 @@
         </ul>
         
         {% endif %}
+        
+        
+        
+        
 
     </div>
 </section>
