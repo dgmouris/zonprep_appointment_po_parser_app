@@ -30,12 +30,12 @@ export default function Search() {
     return <div>Error: {error.message}</div>
   }
   return (
-    <div>
+    <section class="app-card">
       <SearchAppointmentOrPO
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
       />
       <SearchResults searchTerm={searchTerm} data={data} loading={isPending}/>
-    </div>
+    </section>
   )
 }
