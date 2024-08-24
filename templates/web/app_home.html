@@ -8,14 +8,10 @@
 {% block app %}
 
 <section class="app-card">
-    <div id="front-end-react-app"></div>
-</section>
-<section class="app-card">
-    <div class="pg-content">
-        <div className="px-4 sm:px-0">
-            <h3 className="text-base font-semibold leading-7 text-gray-900">Upload Appointment Ids</h3>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">Upload a CSV with appointments</p>
-        </div>
+    <div class="">
+        <h2 className="mt-2 text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+            Upload Appointment Ids
+        </h2>
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             {{ zonprep_form.non_field_errors }}
@@ -36,11 +32,10 @@
         </ul>
         
         {% endif %}
-        
-        
-        
-        
-
     </div>
+</section>
+
+<section class="app-card">
+    <div id="front-end-react-app"></div>
 </section>
 {% endblock %}
