@@ -14,6 +14,7 @@ from django.utils.dateparse import parse_date
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .seralizers import (ReadOnlySearchAppointmentOrPOSerializer,
                          ZonprepAppointmentSerializer,
@@ -23,6 +24,7 @@ from .models import ZonprepAppointment, ZonprepPurchaseOrder
 
 class ZonprepPurchaseOrderViewset(viewsets.ReadOnlyModelViewSet):
     serializer_class = ZonprepPurchaseOrderSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return  ZonprepPurchaseOrder.objects.all()
@@ -44,8 +46,8 @@ class ZonprepPurchaseOrderViewset(viewsets.ReadOnlyModelViewSet):
 
 
 class ZonprepAppointmentViewset(viewsets.ReadOnlyModelViewSet):
-
     serializer_class = ZonprepAppointmentSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return  ZonprepAppointment.objects.all()
@@ -67,6 +69,7 @@ class ZonprepAppointmentViewset(viewsets.ReadOnlyModelViewSet):
 
 
 class SearchAppointmentOrPOViewset(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
 
     def list(self, request):
         search = request.query_params.get('q', None)
