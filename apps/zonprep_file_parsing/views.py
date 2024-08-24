@@ -7,11 +7,14 @@ apps/web/views.py
 
 under the "home" function
 '''
+from datetime import datetime
 
 from django.utils.html import escape
+from django.utils.dateparse import parse_date
 from rest_framework import viewsets
-from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
+from rest_framework.response import Response
 from .seralizers import (ReadOnlySearchAppointmentOrPOSerializer,
                          ZonprepAppointmentSerializer,
                          ZonprepPurchaseOrderSerializer)
@@ -107,6 +110,37 @@ class SearchAppointmentOrPOViewset(viewsets.ViewSet):
             })
 
         # setup serializer
+        result_serializer = ReadOnlySearchAppointmentOrPOSerializer(data=results, many=True)
+        result_serializer.is_valid(raise_exception=True)
+        return Response(result_serializer.data)
+
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path='appointments_by_date/(?P<date>[^/.]+)'
+    )
+    def appointments_by_date(self, request, date=None):
+        # Get the 'date' query parameter from the request
+        results = []
+        if date:
+            date_obj = datetime.strptime(date, "%Y-%m-%d").date()
+            # Filter appointments based on the provided date
+            appts = ZonprepAppointment.objects.filter(updated_at__date=date_obj)
+
+            for appt in appts:
+                results.append({
+                    "value": appt.appointment_id,
+                    "value_type":"appointment",
+                    "state":appt.state,
+                    "updated":appt.updated_at,
+                    "created":appt.created_at,
+                })
+        else:
+            # If no date is provided, return all appts or an empty list as needed
+            appts = ZonprepAppointment.objects.none()
+
+        # Serialize the filtered queryset
         result_serializer = ReadOnlySearchAppointmentOrPOSerializer(data=results, many=True)
         result_serializer.is_valid(raise_exception=True)
         return Response(result_serializer.data)
