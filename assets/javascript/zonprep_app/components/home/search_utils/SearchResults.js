@@ -2,11 +2,22 @@ import React from 'react'
 
 import { ChevronRightIcon } from '@heroicons/react/20/solid'
 
+import { useNavigate } from 'react-router-dom'
 
 export default function SearchResults({data, loading, searchTerm}) {
+  const navigate = useNavigate()
+  
   if (!data) {
     data= []
   }
+
+  const goToAppointmentOrPO = (value, value_type) => {
+    if (value_type === 'appointment') {
+      navigate(`/appointment/${value}`)
+    } else if (value_type === 'purchase_order') {
+      navigate(`/purchase_order/${value}`)
+    }
+  } 
 
   const isStartingSearch = () => {
     return data.length === 0 && searchTerm.length === 0
@@ -28,7 +39,11 @@ export default function SearchResults({data, loading, searchTerm}) {
       {isNoSearchResults()  && <li className="py-5 text-center">No results found</li>}
       
       {data.map((searchResult)=> {
-        return <li key={searchResult.value} className="cursor-pointer relative flex justify-between gap-x-6 py-5">
+        return <li
+          key={searchResult.value}
+          className="cursor-pointer relative flex justify-between gap-x-6 py-5"
+          onClick={(e) => goToAppointmentOrPO(searchResult.value, searchResult.value_type)}
+        >
          <div className="flex min-w-0 gap-x-4">
            <div className="min-w-0 flex-auto">
              <p className="m-0 text-sm font-semibold leading-6 text-gray-900">
