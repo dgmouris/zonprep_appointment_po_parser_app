@@ -5,7 +5,7 @@
 <li>
   <a href="{% url 'web:home' %}" {% if active_tab == 'dashboard' %}class="active"{% endif %}>
     <i class="fa fa-home h-4 w-4"></i>
-    {% translate "Dashboard" %}
+    {% translate "Home" %}
   </a>
 </li>
 {% if not user.is_anonymous %}
@@ -36,7 +36,9 @@
 </ul>
 {% endif %}
 {% if user.is_superuser %}
-<li class="menu-title">
+<!-- Removed this because it's not necessary -->
+
+<!-- <li class="menu-title">
   <span>{% translate "Admin" %}</span>
 </li>
 <ul class="menu-list">
@@ -52,5 +54,5 @@
       {% translate "Impersonate a User" %}
     </a>
   </li>
-</ul>
+</ul> -->
 {% endif %}
