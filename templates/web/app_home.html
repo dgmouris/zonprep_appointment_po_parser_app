@@ -9,9 +9,9 @@
 
 <section class="app-card">
     <div class="">
-        <h2 className="mt-2 text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+        <h3 className="block text-sm font-medium leading-6 text-gray-900">
             Upload Appointment Ids
-        </h2>
+        </h3>
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             {{ zonprep_form.non_field_errors }}
