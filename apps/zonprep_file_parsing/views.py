@@ -11,8 +11,57 @@ under the "home" function
 from django.utils.html import escape
 from rest_framework import viewsets
 from rest_framework.response import Response
-from .seralizers import ReadOnlySearchAppointmentOrPOSerializer
+from rest_framework.exceptions import NotFound
+from .seralizers import (ReadOnlySearchAppointmentOrPOSerializer,
+                         ZonprepAppointmentSerializer,
+                         ZonprepPurchaseOrderSerializer)
 from .models import ZonprepAppointment, ZonprepPurchaseOrder
+
+
+class ZonprepPurchaseOrderViewset(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ZonprepPurchaseOrderSerializer
+
+    def get_queryset(self):
+        return  ZonprepPurchaseOrder.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        # Customize the list method if needed
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, po_number=None, *args, **kwargs):
+        # Override the retrieve method to filter by p_po_number
+        try:
+            appointment = ZonprepPurchaseOrder.objects.get(p_po_number=po_number)
+        except ZonprepPurchaseOrder.DoesNotExist:
+            raise NotFound("ZonprepPurchaseOrder with this appointment_id does not exist")
+        serializer = self.get_serializer(appointment)
+        return Response(serializer.data)
+
+
+class ZonprepAppointmentViewset(viewsets.ReadOnlyModelViewSet):
+
+    serializer_class = ZonprepAppointmentSerializer
+
+    def get_queryset(self):
+        return  ZonprepAppointment.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        # Customize the list method if needed
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, appointment_id=None, *args, **kwargs):
+        # Override the retrieve method to filter by appointment_id
+        try:
+            appointment = ZonprepAppointment.objects.get(appointment_id=appointment_id)
+        except ZonprepAppointment.DoesNotExist:
+            raise NotFound("ZonprepAppointment with this appointment_id does not exist")
+        serializer = self.get_serializer(appointment)
+        return Response(serializer.data)
+
 
 class SearchAppointmentOrPOViewset(viewsets.ViewSet):
 
