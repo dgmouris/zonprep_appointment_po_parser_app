@@ -25,12 +25,12 @@ export default function RecentAppointments() {
   console.log(error);
 
   if (error) {
-    return<section class="app-card">Error getting dates: {error.message}</section>
+    return<section className="app-card">Error getting dates: {error.message}</section>
   }
 
   if (isPending) {
     return (
-     <section class="app-card">
+     <section className="app-card">
         <h3 htmlFor="search" className="block text-sm font-medium leading-6 text-gray-900">
           Appointments updated in the last day.
         </h3>
@@ -41,7 +41,7 @@ export default function RecentAppointments() {
 
   if (data.length === 0) {
     return (
-     <section class="app-card">
+     <section className="app-card">
         <h3 htmlFor="search" className="block text-sm font-medium leading-6 text-gray-900">
           Appointments updated today
         </h3>
@@ -52,7 +52,7 @@ export default function RecentAppointments() {
 
   
   return (
-   <section class="app-card">
+   <section className="app-card">
       <h3 htmlFor="search" className="block text-sm font-medium leading-6 text-gray-900">
         Appointments updated today
       </h3>

@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-query'
 
 import AppointmentInfoDisplay from './AppointmentInfoDisplay';
-
+import AppointmentStatus from '../utils/AppointmentStatus';
 
 export default function AppointmentPage() {
   const { appointmentId } = useParams();
@@ -38,8 +38,14 @@ export default function AppointmentPage() {
   }
 
   return <div>
-
-    <AppointmentInfoDisplay data={data}/>
+      <div className="flex flex-col md:flex-row  md:gap-4">
+        <div className="w-full md:w-2/3">
+          <AppointmentInfoDisplay data={data}/>
+        </div>
+        <div className="w-full md:w-1/3">
+          <AppointmentStatus appointment={data} />
+        </div>
+    </div>
   </div>
 
 

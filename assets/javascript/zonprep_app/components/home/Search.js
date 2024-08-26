@@ -30,7 +30,7 @@ export default function Search() {
     return <div>Error: {error.message}</div>
   }
   return (
-    <section class="app-card">
+    <section className="app-card">
       <SearchAppointmentOrPO
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
