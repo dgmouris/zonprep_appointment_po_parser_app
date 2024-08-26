@@ -71,9 +71,9 @@ export default function AppointmentStatus({appointment}) {
     const currentIndex = tempSteps.findIndex(step => step.valid_states.includes(appointment.state))
 
     tempSteps.forEach((step, index) => {
-      if (index < currentIndex) {
+      if (index <= currentIndex) {
         step.status = 'complete'
-      } else if (index === currentIndex) {
+      } else if (index === (currentIndex  + 1)) {
         step.status = 'current'
       } else {
         step.status = 'upcoming'
