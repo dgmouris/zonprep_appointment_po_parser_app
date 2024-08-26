@@ -61,7 +61,7 @@ const PURCHASE_ORDER_DATA_MAPPING = {
 
 export default function PurchaseOrderInfoDisplay({data}) {
   return (
-    <div>
+    <section className="app-card">
       <div className="px-4 sm:px-0">
         <h3 className="text-base font-semibold leading-7 text-gray-900">Purchase Order</h3>
         <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">Purchase Order Details</p>
@@ -88,6 +88,6 @@ export default function PurchaseOrderInfoDisplay({data}) {
           }
         </dl>
       </div>
-    </div>
+    </section>
   )
 }

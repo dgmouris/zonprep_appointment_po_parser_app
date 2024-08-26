@@ -8,7 +8,7 @@ import {
 } from '@tanstack/react-query'
 
 import PurchaseOrderInfoDisplay from './PurchaseOrderInfoDisplay';
-
+import PurchaseOrderStatus from '../utils/PurchaseOrderStatus';
 
 export default function PurchaseOrderPage() {
 
@@ -40,7 +40,15 @@ export default function PurchaseOrderPage() {
 
   return (
     <div>
-      <PurchaseOrderInfoDisplay data={data}/>
+
+      <div className="flex flex-col md:flex-row  md:gap-4">
+        <div className="w-full md:w-2/3">
+          <PurchaseOrderInfoDisplay data={data}/>
+        </div>
+        <div className="w-full md:w-1/3">
+          <PurchaseOrderStatus po={data} />
+        </div>
+    </div>
     </div>
   )
 }

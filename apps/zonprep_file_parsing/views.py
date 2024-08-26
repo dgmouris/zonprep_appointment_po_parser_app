@@ -38,7 +38,7 @@ class ZonprepPurchaseOrderViewset(viewsets.ReadOnlyModelViewSet):
     def retrieve(self, request, po_number=None, *args, **kwargs):
         # Override the retrieve method to filter by p_po_number
         try:
-            appointment = ZonprepPurchaseOrder.objects.get(p_po_number=po_number)
+            appointment = ZonprepPurchaseOrder.objects.filter(p_po_number=po_number).first()
         except ZonprepPurchaseOrder.DoesNotExist:
             raise NotFound("ZonprepPurchaseOrder with this appointment_id does not exist")
         serializer = self.get_serializer(appointment)
@@ -61,7 +61,7 @@ class ZonprepAppointmentViewset(viewsets.ReadOnlyModelViewSet):
     def retrieve(self, request, appointment_id=None, *args, **kwargs):
         # Override the retrieve method to filter by appointment_id
         try:
-            appointment = ZonprepAppointment.objects.get(appointment_id=appointment_id)
+            appointment = ZonprepAppointment.objects.filter(appointment_id=appointment_id).first()
         except ZonprepAppointment.DoesNotExist:
             raise NotFound("ZonprepAppointment with this appointment_id does not exist")
         serializer = self.get_serializer(appointment)
