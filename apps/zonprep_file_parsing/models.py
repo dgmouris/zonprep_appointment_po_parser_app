@@ -13,7 +13,7 @@ from .file_parsers.TypeAPDFParser import TypeAPDFParser
 
 class ZonprepAppointment(BaseModel):
     # appointment id given by the zonprep
-    appointment_id = models.CharField(max_length=255)
+    request_id = models.CharField(max_length=255)
     state = models.CharField(max_length=255)
     raw_attachment_download = models.FileField(upload_to='zonprep_appointment_attachments/', null=True, blank=True)
     raw_parsed_attachment_json_field = models.JSONField(null=True, blank=True)

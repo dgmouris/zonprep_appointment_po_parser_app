@@ -1,12 +1,8 @@
 import React from 'react'
 
 const APPOINTMENT_DATA_MAPPING = {
-  "created_at": {
-    "label": "Created",
-    "type": "str"
-  },
-  "updated_at": {
-    "label": "Last Updated",
+  "p_appointment_id": {
+    "label": "Appointment ID",
     "type": "str"
   },
   "state": {
@@ -65,6 +61,14 @@ const APPOINTMENT_DATA_MAPPING = {
     "label": "Units",
     "type": "str"
   },
+  "created_at": {
+    "label": "Created",
+    "type": "str"
+  },
+  "updated_at": {
+    "label": "Last Updated",
+    "type": "str"
+  },
 }
 
 
@@ -78,8 +82,8 @@ export default function AppointmentInfoDisplay({data}) {
       <div className="mt-6 border-t border-gray-100">
         <dl className="divide-y divide-gray-100">
           <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-            <dt className="text-sm font-medium leading-6 text-gray-900">Appointment ID</dt>
-            <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{data.appointment_id}</dd>
+            <dt className="text-sm font-medium leading-6 text-gray-900">Request ID <br/>(From CSV upload)</dt>
+            <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{data.request_id}</dd>
           </div>
           {
             Object.keys(APPOINTMENT_DATA_MAPPING).map((key) => {

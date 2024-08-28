@@ -14,6 +14,8 @@ export default function SearchResults({data, loading, searchTerm}) {
   const goToAppointmentOrPO = (value, value_type) => {
     if (value_type === 'appointment') {
       navigate(`/appointment/${value}`)
+    } else if (value_type === 'request_id') {
+      navigate(`/appointment/${value}`)
     } else if (value_type === 'purchase_order') {
       navigate(`/purchase_order/${value}`)
     }
@@ -54,8 +56,10 @@ export default function SearchResults({data, loading, searchTerm}) {
              </p>
              <p className="mt-1 flex text-xs leading-5 text-gray-500">
                <span className="relative truncate hover:underline">
-                 { searchResult.value_type === 'appointment' && 'Appointment'}
+                { searchResult.value_type === 'appointment' && 'Appointment'}
                 { searchResult.value_type === 'purchase_order' && 'Purchase Order'}
+                { searchResult.value_type === 'request_id' && 'Request ID'}
+                
                </span>
              </p>
            </div>

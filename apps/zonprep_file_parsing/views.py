@@ -11,6 +11,8 @@ from datetime import datetime
 
 from django.utils.html import escape
 from django.utils.dateparse import parse_date
+from django.db.models import Q
+
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
@@ -61,7 +63,10 @@ class ZonprepAppointmentViewset(viewsets.ReadOnlyModelViewSet):
     def retrieve(self, request, appointment_id=None, *args, **kwargs):
         # Override the retrieve method to filter by appointment_id
         try:
-            appointment = ZonprepAppointment.objects.filter(appointment_id=appointment_id).first()
+            appointment = ZonprepAppointment.objects.filter(
+                Q(request_id=appointment_id) |
+                Q(p_appointment_id=appointment_id)
+            ).first()
         except ZonprepAppointment.DoesNotExist:
             raise NotFound("ZonprepAppointment with this appointment_id does not exist")
         serializer = self.get_serializer(appointment)
@@ -79,12 +84,14 @@ class SearchAppointmentOrPOViewset(viewsets.ViewSet):
             return Response(empty_serializer.data)
         
         # sanitize
-        search = escape(search)
+        search = escape(search).strip().upper()
 
         # check if it's in the po
         appts = ZonprepAppointment.objects.filter(
-            appointment_id__contains=search
+            Q(request_id__contains=search) |
+            Q(p_appointment_id__contains=search)
         )
+        # breakpoint()
 
         pos = ZonprepPurchaseOrder.objects.filter(
             p_po_number__contains=search   
@@ -94,9 +101,14 @@ class SearchAppointmentOrPOViewset(viewsets.ViewSet):
         results = []
         # start with appointments
         for appt in appts:
+            value = appt.request_id
+            value_type = "request_id"
+            if appt.p_appointment_id:
+                value = appt.p_appointment_id
+                value_type="appointment"
             results.append({
-                "value": appt.appointment_id,
-                "value_type":"appointment",
+                "value": value,
+                "value_type":value_type,
                 "state":appt.state,
                 "updated":appt.updated_at,
                 "created":appt.created_at,
@@ -132,9 +144,14 @@ class SearchAppointmentOrPOViewset(viewsets.ViewSet):
             appts = ZonprepAppointment.objects.filter(updated_at__date=date_obj)
 
             for appt in appts:
+                value = appt.request_id
+                value_type = "request_id"
+                if appt.p_appointment_id:
+                    value = appt.p_appointment_id
+                    value_type="appointment"
                 results.append({
-                    "value": appt.appointment_id,
-                    "value_type":"appointment",
+                    "value": value,
+                    "value_type":value_type,
                     "state":appt.state,
                     "updated":appt.updated_at,
                     "created":appt.created_at,
