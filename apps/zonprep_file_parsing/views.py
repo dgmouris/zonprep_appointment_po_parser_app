@@ -52,7 +52,7 @@ class ZonprepAppointmentViewset(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return  ZonprepAppointment.objects.all()
+        return  ZonprepAppointment.objects.all().prefetch_related('purchase_orders')
 
     def list(self, request, *args, **kwargs):
         # Customize the list method if needed

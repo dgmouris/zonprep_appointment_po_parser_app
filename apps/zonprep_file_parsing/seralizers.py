@@ -10,12 +10,14 @@ class ReadOnlySearchAppointmentOrPOSerializer(serializers.Serializer):
     created = serializers.DateTimeField()
 
 
-class ZonprepAppointmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ZonprepAppointment
-        fields = '__all__'  # Include all fields from the model
-
 class ZonprepPurchaseOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = ZonprepPurchaseOrder
+        fields = '__all__'  # Include all fields from the model
+
+
+class ZonprepAppointmentSerializer(serializers.ModelSerializer):
+    purchase_orders = ZonprepPurchaseOrderSerializer(many=True)
+    class Meta:
+        model = ZonprepAppointment
         fields = '__all__'  # Include all fields from the model

@@ -40,9 +40,9 @@ export default function SearchResults({data, loading, searchTerm}) {
       
       {isNoSearchResults()  && <li className="py-5 text-center">No results found</li>}
       
-      {data.map((searchResult)=> {
+      {data.map((searchResult, index)=> {
         return <li
-          key={searchResult.value}
+          key={index}
           className="cursor-pointer relative flex justify-between gap-x-6 py-5"
           onClick={(e) => goToAppointmentOrPO(searchResult.value, searchResult.value_type)}
         >
