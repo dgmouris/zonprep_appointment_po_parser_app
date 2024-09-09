@@ -8,18 +8,22 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/stable/ref/settings/
 """
 
+import json
 import os
 from pathlib import Path
 
 import environ
 from django.utils.translation import gettext_lazy
 
+# needed for account 
+from google.oauth2 import service_account
+
+
 # Build paths inside the project like this: BASE_DIR / "subdir".
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env()
 env.read_env(os.path.join(BASE_DIR, ".env"))
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/stable/howto/deployment/checklist/
 
@@ -254,8 +258,23 @@ STORAGES = {
         # "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
+    "production_media_storage": {
+        "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+        # "OPTIONS": {
+        #   ...your_options_here
+        # },
+    },
 }
 
+# Create a Production media storage option
+# this is to add it to the file field
+MEDIA_STORAGE_PARAMS = {}
+if not DEBUG:
+    MEDIA_STORAGE_PARAMS = {"storages": "production_media_storage"}
+
+
+
+# this is going to be for local data.
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 
@@ -398,3 +417,19 @@ GMAIL_SECRET_CREDENTIALS = env("GMAIL_SECRET_CREDENTIALS", default="")
 SALESFORCE_USERNAME=env("SALESFORCE_USERNAME", default="")
 SALESFORCE_PASSWORD=env("SALESFORCE_PASSWORD", default="")
 SALESFORCE_SECURITY_TOKEN=env("SALESFORCE_SECURITY_TOKEN", default="")
+
+# CLOUD STORAGE CREDENTIALS AND SETTINGS
+
+GS_BUCKET_NAME = env('CLOUD_STORAGE_NAME', None)
+
+# Add an unique ID to a file name if same file name exists
+GS_FILE_OVERWRITE = False
+
+CLOUD_STORAGE_CREDENTIALS = env('CLOUD_STORAGE_CREDENTIALS')
+
+CLOUD_STORAGE_CREDENTIALS_DICT = json.loads(CLOUD_STORAGE_CREDENTIALS)
+
+
+GS_CREDENTIALS = service_account.Credentials.from_service_account_info(
+    CLOUD_STORAGE_CREDENTIALS_DICT
+)

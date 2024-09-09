@@ -91,7 +91,6 @@ class SearchAppointmentOrPOViewset(viewsets.ViewSet):
             Q(request_id__contains=search) |
             Q(p_appointment_id__contains=search)
         )
-        # breakpoint()
 
         pos = ZonprepPurchaseOrder.objects.filter(
             p_po_number__contains=search   

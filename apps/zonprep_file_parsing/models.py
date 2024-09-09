@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 
 from apps.utils.models import BaseModel
+from apps.utils.storage import CustomGoogleCloudStorage
 
 from .state import ZonprepAppointmentState, ZonprepPurchaseOrderState, ZonprepAppointmentTaskState
 from .gmail_utils import GmailUtility
@@ -15,7 +16,12 @@ class ZonprepAppointment(BaseModel):
     # appointment id given by the zonprep
     request_id = models.CharField(max_length=255)
     state = models.CharField(max_length=255)
-    raw_attachment_download = models.FileField(upload_to='zonprep_appointment_attachments/', null=True, blank=True)
+    raw_attachment_download = models.FileField(
+        upload_to='zonprep_appointment_attachments/',
+        null=True,
+        blank=True,
+        storage=CustomGoogleCloudStorage()
+    )
     raw_parsed_attachment_json_field = models.JSONField(null=True, blank=True)
 
     # Note all of the parsed fields will have the prefix "p_" to denote that they are parsed fields.
@@ -54,7 +60,7 @@ class ZonprepAppointment(BaseModel):
     }
 
     def __str__(self):
-        return f"{self.appointment_id} - {self.state}"
+        return f"{self.request_id} - {self.state}"
 
     '''
     This is the function create appointments.
@@ -64,7 +70,7 @@ class ZonprepAppointment(BaseModel):
     @staticmethod
     def create_appointment(appointment_id, appointment_state=None):
         appointment, _ =ZonprepAppointment.objects.get_or_create(
-            appointment_id=appointment_id,
+            request_id=appointment_id,
         )
         if appointment_state is None:
             appointment_state = ZonprepAppointmentState.CREATED
@@ -76,7 +82,9 @@ class ZonprepAppointment(BaseModel):
         return appointment, created
 
     def get_email_subject(self):
-        return F"POD for freight: {self.appointment_id}"
+        if self.p_appointment_id:
+            return F"POD for freight: appointment_id: {self.p_appointment_id}"
+        return F"POD for freight: request_id: {self.request_id}"
 
     # State
     '''
@@ -112,7 +120,15 @@ class ZonprepAppointment(BaseModel):
         appointments = ZonprepAppointment.objects.filter(
             state=ZonprepAppointmentState.SENT_TO_FULFILLMENT
         )
+        ZonprepAppointment.process_and_parse_appointments(appointments)
 
+    # Helper methods.
+    '''
+    This is the main funtion that will process all of the appointments passed in to be
+    downloaded.
+    '''
+    @staticmethod
+    def process_and_parse_appointments(appointments):
         for appointment in appointments:
             # get the email hopefully returned with an attachment.
             attachment = appointment.get_type_a_appointment_email_attachment()
@@ -147,7 +163,6 @@ class ZonprepAppointment(BaseModel):
             # create the purchase orders in salesforce
             appointment.create_purchase_orders_in_salesforce()
 
-    # Helper methods.
     '''
     Once the appointment is in the CREATED state
     you need to send an email to the external fulfillment
@@ -169,13 +184,13 @@ class ZonprepAppointment(BaseModel):
 
     def get_gmail_attachment_query_string(self):
         # note: I only need to have the appointment id as the subject.
-        return F"subject:{self.appointment_id} has:attachment"
+        return F"subject:{self.request_id} has:attachment"
 
     def save_raw_attachment(self, attachment_bytes):
         pdf_content = ContentFile(attachment_bytes)
 
         self.raw_attachment_download.save(
-            F"{self.appointment_id}.pdf",
+            F"{self.request_id}.pdf",
             pdf_content
         )
 
@@ -198,7 +213,11 @@ class ZonprepAppointment(BaseModel):
         return message_attachment
 
     def parse_appointment_pdf_to_dict(self):
-        type_a_pdf_parser = TypeAPDFParser(self.raw_attachment_download.path)
+        # local read the path:
+        # self.raw_attachment_download.path
+        # production read the pdf file.
+        pdf_file =  self.raw_attachment_download.file.read()
+        type_a_pdf_parser = TypeAPDFParser(pdf_file)
         type_a_pdf_parser_dict = type_a_pdf_parser.extract_text()
         return type_a_pdf_parser_dict
 
@@ -255,7 +274,7 @@ class ZonprepAppointment(BaseModel):
             elif not created and success:
                 self.state = ZonprepAppointmentState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED
                 data = {
-                    "message": F"Appointment {self.appointment_id} Already exists in salesforce",
+                    "message": F"Appointment request id: {self.request_id} Already exists in salesforce",
                     "sf_appointment_id": None
                 }
                 self.save()

@@ -1,3 +1,4 @@
+import io
 import os
 import pprint
 import pdfplumber
@@ -31,7 +32,16 @@ class TypeAPDFParser:
     '''
     def _parse_pdf(self):
         pdf_tables_data = []
-        with pdfplumber.open(self.pdf_path) as pdf:
+
+        # this essentially handles if we need to download the pdf
+        # from google cloud or if we have the pdf in memory (local development)
+        pdf_content = ""
+        if isinstance(self.pdf_path, bytes):
+            pdf_content = io.BytesIO(self.pdf_path)
+        if isinstance(self.pdf_path, str):
+            pdf_content = self.pdf_path
+
+        with pdfplumber.open(pdf_content) as pdf:
             for page in pdf.pages:
                 tables = page.extract_tables()
                 for table in tables:
