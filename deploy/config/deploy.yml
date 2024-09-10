@@ -12,13 +12,13 @@ env:
     - SECRET_KEY
     - DATABASE_URL
     - REDIS_URL
+    - CLOUD_STORAGE_CREDENTIALS
+    - CLOUD_STORAGE_NAME
     - SALESFORCE_USERNAME
     - SALESFORCE_PASSWORD
     - SALESFORCE_SECURITY_TOKEN
     - TURNSTILE_KEY
     - TURNSTILE_SECRET
-    - CLOUD_STORAGE_CREDENTIALS
-    - CLOUD_STORAGE_NAME
 
 # https://kamal-deploy.org/docs/configuration#using-different-roles-for-servers
 servers:
