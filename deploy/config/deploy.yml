@@ -68,6 +68,9 @@ builder:
   multiarch: true
   dockerfile: '../Dockerfile.web'
   context: '../'
+  secrets:
+    - CLOUD_STORAGE_CREDENTIALS
+    - CLOUD_STORAGE_NAME
 
 # See https://kamal-deploy.org/docs/configuration#using-another-registry-than-docker-hub
 registry:

@@ -420,15 +420,23 @@ SALESFORCE_SECURITY_TOKEN=env("SALESFORCE_SECURITY_TOKEN", default="")
 
 # CLOUD STORAGE CREDENTIALS AND SETTINGS
 
-GS_BUCKET_NAME = env('CLOUD_STORAGE_NAME', default="")
+GS_BUCKET_NAME = env('CLOUD_STORAGE_NAME')
 
 # Add an unique ID to a file name if same file name exists
 GS_FILE_OVERWRITE = False
 
-CLOUD_STORAGE_CREDENTIALS = env('CLOUD_STORAGE_CREDENTIALS', default="")
+CLOUD_STORAGE_SECRET_FILE = os.path.join(BASE_DIR, 'cloud-storage-secret.json')
 
-CLOUD_STORAGE_CREDENTIALS_DICT = json.loads(CLOUD_STORAGE_CREDENTIALS)
+GS_CREDENTIALS = None
+# Check if the cloud-storage-secret.json exists
+if os.path.exists(CLOUD_STORAGE_SECRET_FILE):
 
-GS_CREDENTIALS = service_account.Credentials.from_service_account_info(
-    CLOUD_STORAGE_CREDENTIALS_DICT
-)
+    GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+        CLOUD_STORAGE_SECRET_FILE
+    )
+else:
+    CLOUD_STORAGE_CREDENTIALS = env('CLOUD_STORAGE_CREDENTIALS')
+    CLOUD_STORAGE_CREDENTIALS_DICT = json.loads(CLOUD_STORAGE_CREDENTIALS)
+    GS_CREDENTIALS = service_account.Credentials.from_service_account_info(
+        CLOUD_STORAGE_CREDENTIALS_DICT
+    )

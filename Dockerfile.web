@@ -69,16 +69,38 @@ RUN --mount=type=cache,target=/root/.cache \
 
 WORKDIR /code
 
+# copy the key for cloud storage to a file.
+RUN --mount=type=secret,id=CLOUD_STORAGE_NAME \
+--mount=type=secret,id=CLOUD_STORAGE_CREDENTIALS \
+DEBUG=False \
+CLOUD_STORAGE_NAME=$(cat /run/secrets/CLOUD_STORAGE_NAME) \
+CLOUD_STORAGE_CREDENTIALS=$(cat /run/secrets/CLOUD_STORAGE_CREDENTIALS) \
+echo $CLOUD_STORAGE_CREDENTIALS > /code/cloud-storage-secret.json
+
+CMD ["cat", "/code/cloud-storage-secret.json"]
+
+# continue on wit hthe rest of the code.
 COPY --chown=django:django . /code
 COPY --from=build-node /code/static /code/static
 
 # why this has to be here:
 # https://stackoverflow.com/questions/59719175/where-to-run-collectstatic-when-deploying-django-app-to-heroku-using-docker
-RUN DEBUG=False python /code/manage.py collectstatic --noinput --settings=zon_prep_ocr_project.settings_production
+# RUN DEBUG=False python /code/manage.py collectstatic --noinput --settings=zon_prep_ocr_project.settings_production
+RUN --mount=type=secret,id=CLOUD_STORAGE_NAME \
+    --mount=type=secret,id=CLOUD_STORAGE_CREDENTIALS \
+    DEBUG=False \
+    CLOUD_STORAGE_NAME=$(cat /run/secrets/CLOUD_STORAGE_NAME) \
+    CLOUD_STORAGE_CREDENTIALS=$(cat /run/secrets/CLOUD_STORAGE_CREDENTIALS) \
+    python /code/manage.py collectstatic --noinput --settings=zon_prep_ocr_project.settings_production
 RUN chown django:django -R static_root
 
 USER django
 
 COPY --chown=django:django deploy/docker_startup.sh /start
-RUN chmod +x /start
+RUN --mount=type=secret,id=CLOUD_STORAGE_NAME \
+    --mount=type=secret,id=CLOUD_STORAGE_CREDENTIALS \
+    CLOUD_STORAGE_NAME=$(cat /run/secrets/CLOUD_STORAGE_NAME) \
+    CLOUD_STORAGE_CREDENTIALS=$(cat /run/secrets/CLOUD_STORAGE_CREDENTIALS) \
+    chmod +x /start
+# RUN chmod +x /start
 CMD /start
