@@ -7,6 +7,7 @@ module.exports = {
     './assets/**/*.tsx',
     './templates/**/*.html',
     './apps/web/templatetags/form_tags.py',
+    "./node_modules/react-tailwindcss-datepicker/dist/index.esm.{js,ts}",
   ],
   safelist: [
     'alert-success',

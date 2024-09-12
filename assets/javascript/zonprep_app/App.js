@@ -3,6 +3,7 @@ import React from 'react'
 import HomePage from './components/home/HomePage'
 import AppointmentPage from './components/appointment/AppointmentPage';
 import PurchaseOrderPage from './components/purchase_order/PurchaseOrderPage';
+import UnparsedAppointmentsPage from './components/unparsed_appointments/UnparsedAppointmentsPage';
 import { 
   HashRouter,
   Route,
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/appointment/:appointmentId" element={<AppointmentPage />} />
           <Route path="/purchase_order/:purchaseOrderId" element={<PurchaseOrderPage />} />
+          <Route path="/unparsed_appointments" element={<UnparsedAppointmentsPage />}/>
         </Routes>
       </HashRouter>
     </QueryClientProvider>

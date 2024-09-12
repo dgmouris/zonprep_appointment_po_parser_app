@@ -3,10 +3,15 @@
   <span>{% translate "Application" %}</span>
 </li>
 <li>
-  <a href="{% url 'web:home' %}" {% if active_tab == 'dashboard' %}class="active"{% endif %}>
+  <a href="{% url 'web:home' %}">
     <i class="fa fa-home h-4 w-4"></i>
     {% translate "Home" %}
   </a>
+  <a href="/#/unparsed_appointments">
+    <i class="fa fa-envelope h-4 w-4"></i>
+    Resend Appointment Request 
+  </a>
+  
 </li>
 {% if not user.is_anonymous %}
 <li class="menu-title">
