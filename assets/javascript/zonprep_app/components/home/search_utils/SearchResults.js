@@ -68,13 +68,18 @@ export default function SearchResults({data, loading, searchTerm, noResultsMessa
              </p>
            </div>
          </div>
-         <div className="flex shrink-0 items-center gap-x-4">
+         <div className="flex items-center justify-between gap-x-4 sm:w-1/2 sm:flex-none">
            <div className="hidden sm:flex sm:flex-col sm:items-end">
              {/* 
             Build out the state here for the search result
             Take a look here https://tailwindui.com/components/application-ui/lists/stacked-lists
 
              */}
+              {searchResult.extra_info &&
+                <p className="mt-1 text-xs leading-5 text-gray-500">
+                  {searchResult.extra_info}
+                </p>
+              }
            </div>
            <ChevronRightIcon aria-hidden="true" className="h-5 w-5 flex-none text-gray-400" />
          </div>
