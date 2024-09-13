@@ -19,10 +19,6 @@ export default function RecentAppointments() {
       ),
     enabled: true
   })
-  console.log("RecentAppointments")
-  console.log(data);
-  console.log(isPending);
-  console.log(error);
 
   if (error) {
     return<section className="app-card">Error getting dates: {error.message}</section>
