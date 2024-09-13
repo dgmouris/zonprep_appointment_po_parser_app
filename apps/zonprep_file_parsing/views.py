@@ -180,17 +180,11 @@ class SearchAppointmentOrPOViewset(viewsets.ViewSet):
         # Get the 'date' query parameter from the request
         results = []
         if date:
-            date_obj = datetime.strptime(date, "%Y-%m-%d").date()
             # Filter appointments based on the provided date
             appts = []
             if no_response:
-                appts = ZonprepAppointment.objects.filter(
-                    updated_at__date=date_obj,
-                    state__in=[
-                        ZonprepAppointmentState.SENT_TO_FULFILLMENT,
-                        ZonprepAppointmentState.FULFILLMENT_NOT_REPLIED,
-                    ]
-                )
+                appts = ZonprepAppointment.get_appointments_with_no_response_for_date(date)
+
             for appt in appts:
                 value = appt.request_id
                 value_type = "request_id"

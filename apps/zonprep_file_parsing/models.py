@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
@@ -348,6 +350,23 @@ class ZonprepAppointment(BaseModel):
 
         return return_values
 
+    '''
+    This function just returns emails that aren't read for a specific date.
+    params:
+        date: str in the format of "YYYY-MM-DD"
+    returns: querySet of ZonprepAppointment
+    '''
+    @staticmethod
+    def get_appointments_with_no_response_for_date(date):
+        date_obj = datetime.strptime(date, "%Y-%m-%d").date()
+        appts = ZonprepAppointment.objects.filter(
+            updated_at__date=date_obj,
+            state__in=[
+                ZonprepAppointmentState.SENT_TO_FULFILLMENT,
+                ZonprepAppointmentState.FULFILLMENT_NOT_REPLIED,
+            ]
+        )
+        return appts
 
 class ZonprepPurchaseOrder(BaseModel):
     appointment = models.ForeignKey(
