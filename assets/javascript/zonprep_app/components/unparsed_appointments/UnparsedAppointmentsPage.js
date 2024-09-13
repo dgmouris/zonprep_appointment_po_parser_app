@@ -22,9 +22,12 @@ export default function UnparsedAppointmentsPage() {
   // just to initialize the start date from the url.
   const getDateFromUrlOrYesterday = () => {
     if (dateFromUrl) {
-      return new Date(dateFromUrl)
+      // need to add this for silly bug.
+      const TIME_FOR_DATE = "T00:00:00"
+      return new Date(`${dateFromUrl}${TIME_FOR_DATE}`)
+    } else {
+      return YESTERDAY
     }
-    return YESTERDAY
   }
 
   const [dateValue, setDateValue] = useState({ 
@@ -43,6 +46,9 @@ export default function UnparsedAppointmentsPage() {
   })
 
   useEffect(() => {
+    console.log(dateValue)
+    console.log(getDateFromUrlOrYesterday())
+    console.log(`/app/v1/search/unparsed_appointments_by_date/${getFormattedDate()}/?no_external_fulfillment_response=True`)
     // whenever the date changes, we need to refetch the data.
     queryClient.invalidateQueries({ queryKey: ['unparsed_appointments_by_date'] })
     replaceCurrentPath()
