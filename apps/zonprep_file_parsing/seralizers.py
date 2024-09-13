@@ -8,6 +8,9 @@ class ReadOnlySearchAppointmentOrPOSerializer(serializers.Serializer):
     state = serializers.CharField(max_length=255)
     updated = serializers.DateTimeField()
     created = serializers.DateTimeField()
+    # this info will be shown in the middle of the search result row on the front end.
+    # flexible and vague on purpose.
+    extra_info = serializers.CharField(required=False, allow_blank=True)
 
 
 class ZonprepPurchaseOrderSerializer(serializers.ModelSerializer):

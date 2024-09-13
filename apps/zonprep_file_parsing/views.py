@@ -199,12 +199,14 @@ class SearchAppointmentOrPOViewset(viewsets.ViewSet):
                 if appt.p_appointment_id:
                     value = appt.p_appointment_id
                     value_type="appointment"
+
                 results.append({
                     "value": value,
                     "value_type":value_type,
                     "state":appt.state,
                     "updated":appt.updated_at,
                     "created":appt.created_at,
+                    "extra_info": F"Tried {appt.message_send_retried + 1} time(s) to send message to fulfillment"
                 })
         else:
             # If no date is provided, return all appts or an empty list as needed

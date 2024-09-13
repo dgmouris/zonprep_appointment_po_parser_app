@@ -26,6 +26,8 @@ class ZonprepAppointment(BaseModel):
     )
     raw_parsed_attachment_json_field = models.JSONField(null=True, blank=True)
 
+    message_send_retried = models.IntegerField(default=0)
+
     # Note all of the parsed fields will have the prefix "p_" to denote that they are parsed fields.
     p_appointment_date = models.CharField(max_length=255, null=True, blank=True)
     p_appointment_id = models.CharField(max_length=255, null=True, blank=True)
