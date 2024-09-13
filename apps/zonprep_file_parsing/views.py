@@ -18,6 +18,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from .state import ZonprepAppointmentState
 from .seralizers import (ReadOnlySearchAppointmentOrPOSerializer,
                          ZonprepAppointmentSerializer,
                          ZonprepPurchaseOrderSerializer)
@@ -142,6 +143,54 @@ class SearchAppointmentOrPOViewset(viewsets.ViewSet):
             # Filter appointments based on the provided date
             appts = ZonprepAppointment.objects.filter(updated_at__date=date_obj)
 
+            for appt in appts:
+                value = appt.request_id
+                value_type = "request_id"
+                if appt.p_appointment_id:
+                    value = appt.p_appointment_id
+                    value_type="appointment"
+                results.append({
+                    "value": value,
+                    "value_type":value_type,
+                    "state":appt.state,
+                    "updated":appt.updated_at,
+                    "created":appt.created_at,
+                })
+        else:
+            # If no date is provided, return all appts or an empty list as needed
+            appts = ZonprepAppointment.objects.none()
+
+        # Serialize the filtered queryset
+        result_serializer = ReadOnlySearchAppointmentOrPOSerializer(data=results, many=True)
+        result_serializer.is_valid(raise_exception=True)
+        return Response(result_serializer.data)
+
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path='unparsed_appointments_by_date/(?P<date>[^/.]+)'
+    )
+    def unparsed_appointments_by_date(self, request, date=None):
+        no_response = None
+        no_response_raw = request.query_params.get('no_external_fulfillment_response', None)
+        if no_response_raw:
+            no_response = no_response_raw.lower() == 'true'
+
+        # Get the 'date' query parameter from the request
+        results = []
+        if date:
+            date_obj = datetime.strptime(date, "%Y-%m-%d").date()
+            # Filter appointments based on the provided date
+            appts = []
+            if no_response:
+                appts = ZonprepAppointment.objects.filter(
+                    updated_at__date=date_obj,
+                    state__in=[
+                        ZonprepAppointmentState.SENT_TO_FULFILLMENT,
+                        ZonprepAppointmentState.FULFILLMENT_NOT_REPLIED,
+                    ]
+                )
             for appt in appts:
                 value = appt.request_id
                 value_type = "request_id"
