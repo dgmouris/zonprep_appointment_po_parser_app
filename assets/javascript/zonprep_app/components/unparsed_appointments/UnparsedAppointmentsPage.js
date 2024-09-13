@@ -36,7 +36,9 @@ export default function UnparsedAppointmentsPage() {
   });
 
   const queryClient = useQueryClient();
-  const { isPending, error, data } = useQuery({
+  
+  // get the appointments that haven't gotten a response from external fulfillment.
+  const { isPending, error, data: appointmentsWithNoResponseData } = useQuery({
     queryKey: ['unparsed_appointments_by_date'],
     queryFn: () =>
       fetch(`/app/v1/search/unparsed_appointments_by_date/${getFormattedDate()}/?no_external_fulfillment_response=True`).then((res) =>
@@ -45,10 +47,18 @@ export default function UnparsedAppointmentsPage() {
     enabled: true
   })
 
+  // get appointments with bad states.
+  const { isPending: isPendingBadStates, error: errorBadStates ,data: appointmentsWithBadStatesData } = useQuery({
+    queryKey: ['unparsed_bad_states_appointments_by_date'],
+    queryFn: () =>
+      fetch(`/app/v1/search/unparsed_appointments_by_date/${getFormattedDate()}/?appointments_with_bad_states=True`).then((res) =>
+        res.json(),
+
+      ),  
+    enabled: true
+  })
+
   useEffect(() => {
-    console.log(dateValue)
-    console.log(getDateFromUrlOrYesterday())
-    console.log(`/app/v1/search/unparsed_appointments_by_date/${getFormattedDate()}/?no_external_fulfillment_response=True`)
     // whenever the date changes, we need to refetch the data.
     queryClient.invalidateQueries({ queryKey: ['unparsed_appointments_by_date'] })
     replaceCurrentPath()
@@ -79,29 +89,68 @@ export default function UnparsedAppointmentsPage() {
     }
   }
 
+  const appointmentsWithIssuesExist = () => {
+    if (!appointmentsWithBadStatesData) {
+      return false
+    }
+    return appointmentsWithBadStatesData.length > 0
+  }
+
   return <div>
       <div className="flex flex-col md:flex-row  md:gap-4">
         <div className="w-full md:w-2/3">
-            <section className="app-card">
-              <div className="px-4 sm:px-0">
-                <h3 className="text-base font-semibold leading-7 text-gray-900">Unparsed Appointments for {getFormattedDateLabel()}</h3>
-                <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">The following appointments havent been parsed.
+          <section className="app-card">
+            <div className="px-4 sm:px-0">
+              <h2 className="text-base font-semibold leading-7 text-gray-900">Unparsed Appointments for {getFormattedDateLabel()}</h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">The following appointments havent been parsed.
+                {getFormattedDate() === getFormattedDate(TODAY) &&
+                  <>
+                    <br/>
+                    You might want to wait until tomorrow to for a response from external fulfillment.
+                  </>
+                }
+              </p>
+            </div>
+            {/* Fix this later create the endpoint for it 
+              <AppointmentParsedDataDisplay />
+            */}
+            <h3 className="mt-4 text-base font-semibold leading-7 text-gray-900">Appointments with No Response from Fulfillment</h3>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
+              The following appointments havent been parsed, most likely for not recieving a correct response from external fulfillment.
+            </p>
+            { error && <p>Error: {error.message}</p>}
+            { appointmentsWithNoResponseData && 
+              <SearchResults
+                data={appointmentsWithNoResponseData}
+                searchTerm={"throwawaytext"}
+                loading={isPending}
+                noResultsMessage={"All requests received a response, nothing to see here."}
+              />
+            }
+
+            { appointmentsWithIssuesExist() &&
+              <div>
+                <h3 className="mt-4 text-base font-semibold leading-7 text-gray-900">Appointments with Issues to resolve</h3>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
+                  The following appointments have issues that need to be resolved.<br/>
+
                   {getFormattedDate() === getFormattedDate(TODAY) &&
-                    <>
-                      <br/>
-                      You might want to wait until tomorrow to for a response from external fulfillment.
-                    </>
+                    `IMPORTANT: This list may give you false positives, please check for tomorrow`
                   }
                 </p>
+                { errorBadStates && <p>Error: {errorBadStates.message}</p>}
+                { appointmentsWithBadStatesData && 
+                  <SearchResults
+                    data={appointmentsWithBadStatesData}
+                    searchTerm={"throwawaytext"}
+                    loading={isPendingBadStates}
+                    noResultsMessage={"No issues with appointments, nothing to see here."}
+                  />
+                }
               </div>
-              <AppointmentParsedDataDisplay />
-              <h3 className="mt-4 text-base font-semibold leading-7 text-gray-900">Appointments with No Response from Fulfillment</h3>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-                The following appointments havent been parsed, most likely for not recieving a correct response from external fulfillment.
-              </p>
-              { error && <p>Error: {error.message}</p>}
-              { data && <SearchResults data={data} searchTerm={"throwawaytext"} loading={isPending}/> }
-            </section>
+            }
+
+          </section>
         </div>
         <div className="w-full md:w-1/3">
           <section className="app-card">

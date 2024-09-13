@@ -4,11 +4,15 @@ import { ChevronRightIcon } from '@heroicons/react/20/solid'
 
 import { useNavigate } from 'react-router-dom'
 
-export default function SearchResults({data, loading, searchTerm}) {
+export default function SearchResults({data, loading, searchTerm, noResultsMessage}) {
   const navigate = useNavigate()
   
   if (!data) {
     data= []
+  }
+  
+  if (!noResultsMessage) {
+    noResultsMessage = "No results found"
   }
 
   const goToAppointmentOrPO = (value, value_type) => {
@@ -38,7 +42,7 @@ export default function SearchResults({data, loading, searchTerm}) {
       }
       
       
-      {isNoSearchResults()  && <li className="py-5 text-center">No results found</li>}
+      {isNoSearchResults()  && <li className="py-5 text-center">{noResultsMessage}</li>}
       
       {data.map((searchResult, index)=> {
         return <li
