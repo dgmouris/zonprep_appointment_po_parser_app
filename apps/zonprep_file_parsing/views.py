@@ -177,6 +177,11 @@ class SearchAppointmentOrPOViewset(viewsets.ViewSet):
         if no_response_raw:
             no_response = no_response_raw.lower() == 'true'
 
+        bad_appointment = None
+        bad_appointment_states_raw = request.query_params.get('appointments_with_bad_states', None)
+        if bad_appointment_states_raw:
+            bad_appointment = bad_appointment_states_raw.lower() == 'true'
+
         # Get the 'date' query parameter from the request
         results = []
         if date:
@@ -184,6 +189,9 @@ class SearchAppointmentOrPOViewset(viewsets.ViewSet):
             appts = []
             if no_response:
                 appts = ZonprepAppointment.get_appointments_with_no_response_for_date(date)
+            elif bad_appointment:
+                appts = ZonprepAppointment.get_appointments_with_bad_states_for_date(date)
+
 
             for appt in appts:
                 value = appt.request_id

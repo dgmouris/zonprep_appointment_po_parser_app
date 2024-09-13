@@ -368,6 +368,29 @@ class ZonprepAppointment(BaseModel):
         )
         return appts
 
+    '''
+    This function returns any appointments that have problems with them. 
+    Note: *IMPORTANT" you might have to add some more when you see some more states.
+
+    params:
+        date: str in the format of "YYYY-MM-DD"
+    returns
+    '''
+    @staticmethod
+    def get_appointments_with_bad_states_for_date(date):
+        date_obj = datetime.strptime(date, "%Y-%m-%d").date()
+        appts = ZonprepAppointment.objects.filter(
+            updated_at__date=date_obj,
+            state__in=[
+                ZonprepAppointmentState.FULFILLMENT_RAW_ATTACHMENT_DOWNLOADED,
+                ZonprepAppointmentState.INCORRECT_FULFILLMENT_ATTACHMENT_RECEIVED,
+                ZonprepAppointmentState.ERROR_OCR_ATTACHMENT_PARSE,
+                ZonprepAppointmentState.INVALID_ATTACHMENT,
+                ZonprepAppointmentState.ERROR_SALESFORCE_APPOINTMENT_DATA_UPLOADED,
+            ]
+        )
+        return appts
+    
 class ZonprepPurchaseOrder(BaseModel):
     appointment = models.ForeignKey(
         ZonprepAppointment,
