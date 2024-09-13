@@ -26,6 +26,7 @@ class ZonprepAppointment(BaseModel):
     )
     raw_parsed_attachment_json_field = models.JSONField(null=True, blank=True)
 
+    # this only will get triggered if you send a retry request email.
     message_send_retried = models.IntegerField(default=0)
 
     # Note all of the parsed fields will have the prefix "p_" to denote that they are parsed fields.
@@ -106,11 +107,7 @@ class ZonprepAppointment(BaseModel):
         appointments = ZonprepAppointment.objects.filter(
             state=ZonprepAppointmentState.CREATED
         )
-        for appointment in appointments:
-            message = appointment.send_external_appointment_request_email()
-            if message:
-                appointment.state = ZonprepAppointmentState.SENT_TO_FULFILLMENT
-                appointment.save()
+        ZonprepAppointment.send_appointment_emails(appointments)
     
     # Appointment Parser
     '''
@@ -166,6 +163,20 @@ class ZonprepAppointment(BaseModel):
 
             # create the purchase orders in salesforce
             appointment.create_purchase_orders_in_salesforce()
+
+    '''
+
+    This function will send out emails to the external fulfillment team
+    and move the state to SENT_TO_FULFILLMENT
+    Note: this will be used in retry logic as well.
+    '''
+    @staticmethod
+    def send_appointment_emails(appointments):
+        for appointment in appointments:
+            message = appointment.send_external_appointment_request_email()
+            if message:
+                appointment.state = ZonprepAppointmentState.SENT_TO_FULFILLMENT
+                appointment.save()
 
     '''
     Once the appointment is in the CREATED state
