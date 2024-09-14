@@ -36,11 +36,8 @@ export default function EmailRetryButton({date}) {
   });
 
   const handleClick = () => {
-    console.log('Clicked');
     mutation.mutate();
   }
-
-  console.log('mutation:', mutation);
 
   return <button
     type="button"

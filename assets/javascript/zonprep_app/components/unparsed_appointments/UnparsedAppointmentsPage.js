@@ -53,14 +53,14 @@ export default function UnparsedAppointmentsPage() {
     queryFn: () =>
       fetch(`/app/v1/search/unparsed_appointments_by_date/${getFormattedDate()}/?appointments_with_bad_states=True`).then((res) =>
         res.json(),
-
       ),
     enabled: true
   })
 
   useEffect(() => {
     // whenever the date changes, we need to refetch the data.
-    queryClient.invalidateQueries({ queryKey: ['unparsed_appointments_by_date', 'unparsed_bad_states_appointments_by_date'] })
+    queryClient.invalidateQueries({ queryKey: ['unparsed_appointments_by_date'] })
+    queryClient.invalidateQueries({ queryKey: ['unparsed_bad_states_appointments_by_date'] })
     replaceCurrentPath()
   }, [dateValue])
 
