@@ -10,8 +10,8 @@ under the "home" function
 from datetime import datetime
 
 from django.utils.html import escape
-from django.utils.dateparse import parse_date
 from django.db.models import Q
+
 
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -46,6 +46,32 @@ class ZonprepPurchaseOrderViewset(viewsets.ReadOnlyModelViewSet):
             raise NotFound("ZonprepPurchaseOrder with this appointment_id does not exist")
         serializer = self.get_serializer(appointment)
         return Response(serializer.data)
+
+
+class ZonprepActionViewset(viewsets.ViewSet):
+    @action(
+        detail=False,
+        methods=['post'],
+        url_path='retry_appointments_to_external_fulfillment/(?P<date>[^/.]+)'
+    )
+    def retry_appointments_to_external_fulfillment(self, request, date=None):
+        results = []
+        appts = None
+        if date:
+            appts = ZonprepAppointment.get_appointments_with_no_response_for_date(date)
+            print(appts)
+            # loop through appointments put them back in the created state.
+            for appt in appts:
+                appt.message_send_retried += 1
+                appt.state = ZonprepAppointmentState.CREATED
+                appt.save()
+        else:
+            # If no date is provided, return all appts or an empty list as needed
+            appts = ZonprepAppointment.objects.none()
+        # Serialize the filtered queryset
+        result_serializer = ZonprepAppointmentSerializer(appts, many=True)
+        return Response(result_serializer.data)
+
 
 
 class ZonprepAppointmentViewset(viewsets.ReadOnlyModelViewSet):
