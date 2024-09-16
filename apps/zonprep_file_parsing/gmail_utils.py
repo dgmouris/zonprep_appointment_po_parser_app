@@ -21,7 +21,7 @@ def convert_to_RFC_datetime(year=1900, month=1, day=1, hour=0, minute=0):
     dt = datetime.datetime(year, month, day, hour, minute, 0).isoformat() + 'Z'
     return dt
 
-class GmailConnectionError(Exception): 
+class GmailConnectionError(Exception):
     """Error connecting to Gmail API."""
 
 class GmailSendingError(Exception):
@@ -38,7 +38,7 @@ class NoEmailsFound(GmailException):
 
 class GmailUtility:
     def __init__(self, user_id=None):
-        
+
         api_name = 'gmail'
         api_version = 'v1'
         scopes = ['https://mail.google.com/']
@@ -47,10 +47,10 @@ class GmailUtility:
             "api_version": api_version,
             "scopes": scopes,
         }
-        
+
         # this needs to be set in the .env file
         service_data['client_secret_json'] = settings.GMAIL_SECRET_CREDENTIALS
-        
+
         self.service = self.create_service(
             **service_data
         )
@@ -77,14 +77,14 @@ class GmailUtility:
         ):
 
         gmail_token_creds = self._get_creds_instance()
-        
+
         # client_secret = json.loads(CLIENT_SECRET_JSON)
         client_secret = gmail_token_creds.secret_credentials
 
         API_SERVICE_NAME = api_name
         API_VERSION = api_version
         SCOPES = [scope for scope in scopes]
-        
+
         creds = None
         working_dir = os.getcwd()
         token_dir = 'gmail_token_files'
@@ -185,7 +185,7 @@ class GmailUtility:
         """Create a message for an email."""
         if sender is None:
             sender = self.gmail_token_creds.gmail_user_id
-        
+
         message = MIMEText(message_text)
         message['to'] = to
         message['from'] = sender
@@ -193,7 +193,7 @@ class GmailUtility:
         raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
         message = {'raw': raw_message}
         """Send an email message."""
-        
+
         try:
             message = self.service.users().messages().send(
                 userId=self.user_id,
@@ -219,5 +219,5 @@ class GmailUtility:
                     file_name = msg_payload['filename']
                     save_location = os.path.join(os.getcwd(), 'attachments', file_name)
                     file_data = self.get_file_data(email['id'], attachment_id, file_name, save_location)
-        
+
         return file_data

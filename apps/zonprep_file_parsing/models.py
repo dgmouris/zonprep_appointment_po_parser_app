@@ -1,5 +1,6 @@
 from datetime import datetime
 import re
+import time
 
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -176,6 +177,8 @@ class ZonprepAppointment(BaseModel):
     @staticmethod
     def send_appointment_emails(appointments):
         for appointment in appointments:
+            # send the email but wait 20 seconds before sending the next one.
+            time.sleep(20)
             message = appointment.send_external_appointment_request_email()
             if message:
                 appointment.state = ZonprepAppointmentState.SENT_TO_FULFILLMENT
