@@ -21,6 +21,10 @@ const APPOINTMENT_DATA_MAPPING = {
     "label": "Carrier",
     "type": "str"
   },
+  "p_scac": {
+    "label": "SCAC",
+    "type": "str"
+  },
   "p_carrier_request_delivery_date": {
     "label": "Carrier Request Delivery Date",
     "type": "str"
