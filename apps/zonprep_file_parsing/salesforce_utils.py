@@ -24,8 +24,8 @@ class SalesforceUtils:
                 "data":{
                     "message": F"Appointment {appt.p_appointment_id} already exists in salesforce",
                     "sf_appointment_id": None
-                } 
-            } 
+                }
+            }
             return result["created"], result["success"], result["data"]
 
         list_of_records = [
@@ -34,6 +34,7 @@ class SalesforceUtils:
                 "Actual_Arrival_Date__c": appt.p_appointment_date,
                 "Appointment_type__c": appt.p_appointment_type,
                 "Carrier__c": appt.p_carrier,
+                "SCAC__c": appt.p_scac,
                 "Carrier_request_delivery_time_and_date__c": appt.p_carrier_request_delivery_date,
                 "Cartons__c": appt.p_cartons,
                 "Dock_Door__c": appt.p_dock_door,
@@ -161,7 +162,7 @@ class SalesforceUtils:
         result = []
         if len(list_of_new_records) > 0:
             result = self.instance.bulk.POs__c.insert(list_of_new_records)
-        
+
         # insert the existing records into the list.
         if len(list_of_existing) > 0:
             for existing in list_of_existing:
@@ -192,6 +193,5 @@ class SalesforceUtils:
             return None
 
         return result['records'][0]['Id']
-        
 
-    
+

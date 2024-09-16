@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -28,7 +29,8 @@ class ZonprepAppointment(BaseModel):
 
     # this only will get triggered if you send a retry request email.
     message_send_retried = models.IntegerField(default=0)
-
+    # needed.
+    fc_code =  models.CharField(max_length=255, null=True, blank=True)
     # Note all of the parsed fields will have the prefix "p_" to denote that they are parsed fields.
     p_appointment_date = models.CharField(max_length=255, null=True, blank=True)
     p_appointment_id = models.CharField(max_length=255, null=True, blank=True)
@@ -38,6 +40,7 @@ class ZonprepAppointment(BaseModel):
     p_cartons = models.CharField(max_length=255, null=True, blank=True)
     p_dock_door = models.CharField(max_length=255, null=True, blank=True)
     p_freight_terms = models.CharField(max_length=255, null=True, blank=True)
+    p_scac = models.CharField(max_length=255, null=True, blank=True)
     p_pallets = models.CharField(max_length=255, null=True, blank=True)
     p_percent_needed = models.CharField(max_length=255, null=True, blank=True)
     p_priority_type = models.CharField(max_length=255, null=True, blank=True)
@@ -69,7 +72,7 @@ class ZonprepAppointment(BaseModel):
 
     '''
     This is the function create appointments.
-    
+
     Note: don't create ZonprepAppointments another way.
     '''
     @staticmethod
@@ -93,7 +96,7 @@ class ZonprepAppointment(BaseModel):
 
     # State
     '''
-    This function sends out messages and will get a response from 
+    This function sends out messages and will get a response from
     parse_type_a_appointments_from_emails once the fulfillment team responds.
 
     fetches appointments in the CREATED state,
@@ -108,7 +111,7 @@ class ZonprepAppointment(BaseModel):
             state=ZonprepAppointmentState.CREATED
         )
         ZonprepAppointment.send_appointment_emails(appointments)
-    
+
     # Appointment Parser
     '''
     Parser function that will encompass the entire flow for parsing.
@@ -147,7 +150,7 @@ class ZonprepAppointment(BaseModel):
             appointment.save()
 
             # parse the email attachement and set the state to SUCCESSFUL_OCR_ATTACHMENT_PARSE
-            parsed_appointment_pdf_data = appointment.parse_appointment_pdf_to_dict()                        
+            parsed_appointment_pdf_data = appointment.parse_appointment_pdf_to_dict()
             appointment.raw_parsed_attachment_json_field = parsed_appointment_pdf_data
             appointment.state = ZonprepAppointmentState.SUCCESSFUL_OCR_ATTACHMENT_PARSE
             appointment.save()
@@ -182,8 +185,8 @@ class ZonprepAppointment(BaseModel):
     Once the appointment is in the CREATED state
     you need to send an email to the external fulfillment
 
-    Take a look at the save() method to see that it's going to 
-    move this appointment to the next state 
+    Take a look at the save() method to see that it's going to
+    move this appointment to the next state
     '''
     def send_external_appointment_request_email(self):
         external_fulfillment = ExternalFulfillmentEmail.load()
@@ -251,15 +254,30 @@ class ZonprepAppointment(BaseModel):
             if key in self.PARSED_FIELDS_MAPPING:
                 field_name = self.PARSED_FIELDS_MAPPING[key]
                 setattr(self, field_name, value)
+
+
         self.state = ZonprepAppointmentState.SUCCESSFUL_APPOINTMENT_INFO_UPDATED
         self.save()
+        # save computed values from the parsed fields.
+        self.p_scac = self._get_scac_from_parsed_field()
+        self.save()
+
+
+    def _get_scac_from_parsed_field(self):
+        text = self.p_carrier
+        match = re.search(r"\[(.*?)\]", text)
+        if match:
+            result = match.group(1)
+            return result
+        return ""
+
 
     '''
     Taking the po raw data and creating po models from it, joined by a foreign key to this model.
     '''
     def create_all_pos_from_raw_parsed_fields(self):
         raw_all_pos_data = self.raw_parsed_attachment_json_field.get('po_data', None)
-        # Note: we'll have to handle the case to differentiate between a coule 
+        # Note: we'll have to handle the case to differentiate between a coule
         if raw_all_pos_data is None:
             self.state = ZonprepAppointmentState.ERROR_OCR_ATTACHMENT_PARSE
             self.save()
@@ -267,13 +285,13 @@ class ZonprepAppointment(BaseModel):
 
         # note that this is actually shipment data and we're going to have to
         # breakout the pos from it and create multiple from one line.
-        # this is taken care of in the ZonprepPurchaseOrder.create_po_model_from_raw_po_fields method. 
+        # this is taken care of in the ZonprepPurchaseOrder.create_po_model_from_raw_po_fields method.
         for raw_po_data in raw_all_pos_data:
             ZonprepPurchaseOrder.create_po_model_from_raw_po_fields(self, raw_po_data)
 
     '''
     This function will send the appointment data to salesforce.
-    returns 
+    returns
         created: bool
         success: bool
         data: dict with message and sf_appointment_id
@@ -303,7 +321,7 @@ class ZonprepAppointment(BaseModel):
                 return False, data
         except SalesForceCreateError as e:
             self.state = ZonprepAppointmentState.ERROR_SALESFORCE_APPOINTMENT_DATA_UPLOADED
-            self.save()    
+            self.save()
             data = {
                 "message": "Error creating appointment in salesforce",
                 "sf_appointment_id": None
@@ -382,7 +400,7 @@ class ZonprepAppointment(BaseModel):
         return appts
 
     '''
-    This function returns any appointments that have problems with them. 
+    This function returns any appointments that have problems with them.
     Note: *IMPORTANT" you might have to add some more when you see some more states.
 
     params:
@@ -403,7 +421,7 @@ class ZonprepAppointment(BaseModel):
             ]
         )
         return appts
-    
+
 class ZonprepPurchaseOrder(BaseModel):
     appointment = models.ForeignKey(
         ZonprepAppointment,
@@ -443,7 +461,7 @@ class ZonprepPurchaseOrder(BaseModel):
 
     def __str__(self):
         return F"PO: {self.p_po_number}, Appointment: {self.appointment}"
-    
+
     '''
     This function is going to be used in the parser to create the purchase orders.
 
@@ -459,7 +477,7 @@ class ZonprepPurchaseOrder(BaseModel):
         all_bols = raw_po_data.get('bols', [""])
         # same with asns
         all_asns = raw_po_data.get('ASNs', [""])
-        
+
         # if there are no pos we're just going to skip them
         if all_pos[0] == "":
             return
@@ -469,7 +487,7 @@ class ZonprepPurchaseOrder(BaseModel):
             # get the current bol or the first one if it doesn't exist.
             bol = ZonprepPurchaseOrder.get_item_or_first(all_bols, index)
             asn = ZonprepPurchaseOrder.get_item_or_first(all_asns, index)
-            
+
             # this is going to map the data to the fields for the model.
             mapping = ZonprepPurchaseOrder.PARSED_FIELDS_MAPPING
             po_data = {
@@ -491,7 +509,7 @@ class ZonprepPurchaseOrder(BaseModel):
             zonprep_purchase_order = ZonprepPurchaseOrder.objects.create(
                 appointment=appointment,
                 state=ZonprepPurchaseOrderState.CREATED_WITH_PARSED_FIELDS,
-                **po_data 
+                **po_data
             )
 
             # log something here in the future.
@@ -540,7 +558,7 @@ class GmailTokenCredentials(SingletonModel):
     secret_credentials = models.JSONField(null=True, blank=True)
     token = models.JSONField(null=True, blank=True)
     gmail_user_id = models.CharField(max_length=255)
-    
+
     def __str__(self) -> str:
         return F"Gmail User ID: {self.gmail_user_id}, Token"
 
@@ -548,7 +566,7 @@ class GmailTokenCredentials(SingletonModel):
     def update_token(self, token):
         self.token = token
         self.save()
-    
+
 
 # This is a model that will store if the task is running or not
 # it will also store the last time it was run.
@@ -558,7 +576,7 @@ class ZonprepAppointmentTask(BaseModel):
     # there's two types of tasks that can be run
     PARSING_TYPE_A_APPOINTMENTS_TASK = "ParsingTypeAAppointments"
     SEND_APPOINTMENT_EMAILS_TASK = "SendAppointmentEmails"
-    
+
     task_name = models.CharField(max_length=255)
     state = models.CharField(max_length=255) # ZonprepAppointmentTaskState
     successful = models.BooleanField(default=False, null=True, blank=True)
@@ -568,7 +586,7 @@ class ZonprepAppointmentTask(BaseModel):
         if self.state == ZonprepAppointmentTaskState.RUNNING:
             return F"Task: {self.task_name} State: {self.task_name}, last run started: {self.created_at}"
         return F"Task: {self.task_name} State: {self.state}, Successful: {self.successful}, last run started: {self.created_at}"
-    
+
     @staticmethod
     def is_running(task_name):
         # if it doesn't exist just send them the completed state.
