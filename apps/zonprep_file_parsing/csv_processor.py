@@ -27,9 +27,13 @@ def process_csv(csv_file, send_to_external_fullfillment=None):
         appointment_state = ZonprepAppointmentState.SENT_TO_FULFILLMENT
 
     for row in reader:
-        appointment_id = row[0]
+        appointment_id = safe_get_from_row(row, 0)
+        # get the fc code.
+        fc_code = safe_get_from_row(row, 1)
+
         _, created = ZonprepAppointment.create_appointment(appointment_id,
-                                                           appointment_state=appointment_state)
+                                                           appointment_state=appointment_state,
+                                                           fc_code=fc_code)
         if created:
             appointment_results["created_appointments"] += 1
         else:
@@ -37,3 +41,10 @@ def process_csv(csv_file, send_to_external_fullfillment=None):
         print(row)  # Process each row
 
     return appointment_results
+
+
+def safe_get_from_row(lst, index):
+    try:
+        return lst[index].strip()
+    except IndexError:
+        return ''

@@ -77,7 +77,9 @@ class ZonprepAppointment(BaseModel):
     Note: don't create ZonprepAppointments another way.
     '''
     @staticmethod
-    def create_appointment(appointment_id, appointment_state=None):
+    def create_appointment(appointment_id,
+                           appointment_state=None,
+                           fc_code=None):
         appointment, _ =ZonprepAppointment.objects.get_or_create(
             request_id=appointment_id,
         )
@@ -86,6 +88,10 @@ class ZonprepAppointment(BaseModel):
 
         if appointment.state == "":
             appointment.state = appointment_state
+            appointment.save()
+
+        if fc_code is not None:
+            appointment.fc_code = fc_code
             appointment.save()
         created = appointment.state == ZonprepAppointmentState.CREATED
         return appointment, created
@@ -169,7 +175,6 @@ class ZonprepAppointment(BaseModel):
             appointment.create_purchase_orders_in_salesforce()
 
     '''
-
     This function will send out emails to the external fulfillment team
     and move the state to SENT_TO_FULFILLMENT
     Note: this will be used in retry logic as well.

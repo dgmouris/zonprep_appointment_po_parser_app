@@ -31,6 +31,7 @@ class SalesforceUtils:
         list_of_records = [
             {
                 "Name": appt.p_appointment_id,
+                "FC_Code__c": appt.fc_code,
                 "Actual_Arrival_Date__c": appt.p_appointment_date,
                 "Appointment_type__c": appt.p_appointment_type,
                 "Carrier__c": appt.p_carrier,
