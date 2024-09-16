@@ -1,7 +1,7 @@
 '''
 The form for this view is in the dashboard because it's all at once.
 
-please take a look at the file 
+please take a look at the file
 
 apps/web/views.py
 
@@ -109,7 +109,7 @@ class SearchAppointmentOrPOViewset(viewsets.ViewSet):
         if search is None:
             empty_serializer = ReadOnlySearchAppointmentOrPOSerializer([], many=True)
             return Response(empty_serializer.data)
-        
+
         # sanitize
         search = escape(search).strip().upper()
 
@@ -117,10 +117,10 @@ class SearchAppointmentOrPOViewset(viewsets.ViewSet):
         appts = ZonprepAppointment.objects.filter(
             Q(request_id__contains=search) |
             Q(p_appointment_id__contains=search)
-        )
+        ).prefetch_related('purchase_orders')
 
         pos = ZonprepPurchaseOrder.objects.filter(
-            p_po_number__contains=search   
+            p_po_number__contains=search
         )
 
         # translate this to one search result list
@@ -167,7 +167,7 @@ class SearchAppointmentOrPOViewset(viewsets.ViewSet):
         if date:
             date_obj = datetime.strptime(date, "%Y-%m-%d").date()
             # Filter appointments based on the provided date
-            appts = ZonprepAppointment.objects.filter(updated_at__date=date_obj)
+            appts = ZonprepAppointment.objects.filter(updated_at__date=date_obj).prefetch_related('purchase_orders')
 
             for appt in appts:
                 value = appt.request_id
