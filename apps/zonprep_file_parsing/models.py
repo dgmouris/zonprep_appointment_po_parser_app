@@ -97,9 +97,7 @@ class ZonprepAppointment(BaseModel):
         return appointment, created
 
     def get_email_subject(self):
-        if self.p_appointment_id:
-            return F"POD for freight: appointment_id: {self.p_appointment_id}"
-        return F"POD for freight: request_id: {self.request_id}"
+        return F"POD for freight ISA: {self.request_id}"
 
     # State
     '''
@@ -404,7 +402,7 @@ class ZonprepAppointment(BaseModel):
                 ZonprepAppointmentState.SENT_TO_FULFILLMENT,
                 ZonprepAppointmentState.FULFILLMENT_NOT_REPLIED,
             ]
-        )
+        ).prefetch_related('purchase_orders')
         return appts
 
     '''
@@ -427,7 +425,7 @@ class ZonprepAppointment(BaseModel):
                 ZonprepAppointmentState.INVALID_ATTACHMENT,
                 ZonprepAppointmentState.ERROR_SALESFORCE_APPOINTMENT_DATA_UPLOADED,
             ]
-        )
+        ).prefetch_related('purchase_orders')
         return appts
 
 class ZonprepPurchaseOrder(BaseModel):
