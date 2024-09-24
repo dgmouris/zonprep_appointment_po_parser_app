@@ -19,7 +19,7 @@ celery -A zon_prep_ocr_project worker -l INFO
 celery -A zon_prep_ocr_project worker -l INFO -P gevent
 '''
 
-@shared_task
+@shared_task(queue="parsing_queue")
 def parse_type_a_email_attachments_task():
     logging.info("""
     ----------------------
@@ -49,7 +49,7 @@ def parse_type_a_email_attachments_task():
     """)
 
 
-@shared_task
+@shared_task(queue="email_queue")
 def send_out_appointment_isa_emails_to_fulfillment_task():
     logging.info("""
     ----------------------

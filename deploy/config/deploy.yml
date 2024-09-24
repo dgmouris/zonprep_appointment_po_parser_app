@@ -34,10 +34,18 @@ servers:
       traefik.http.routers.zon_prep_ocr_project_secure.rule: Host(`testing-zonprep.dgmouris.com`)
       traefik.http.routers.zon_prep_ocr_project_secure.tls: true
       traefik.http.routers.zon_prep_ocr_project_secure.tls.certresolver: letsencrypt
-  celery:
+  celery_email_parser:
     hosts:
       - 35.245.54.153
-    cmd: celery -A zon_prep_ocr_project worker -l INFO --concurrency 2
+    cmd: celery -A zon_prep_ocr_project worker --loglevel=INFO --concurrency=1 -Q email_queue
+    options:
+      network: zon_prep_ocr_project-network
+    labels:
+      traefik.enable: "false"
+  celery_parsing_queue:
+    hosts:
+      - 35.245.54.153
+    cmd: celery -A zon_prep_ocr_project worker --loglevel=INFO --concurrency=1 -Q parsing_queue
     options:
       network: zon_prep_ocr_project-network
     labels:

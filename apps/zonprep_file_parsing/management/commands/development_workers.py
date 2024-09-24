@@ -5,11 +5,11 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = 'Parses Emails recieved from External Fulfillment and updates the zonprep'
+    help = '''Sets up all of the workers for local development.'''
     commands = [
         'celery -A zon_prep_ocr_project beat -l INFO',  # Replace with long-running commands
-        'celery -A zon_prep_ocr_project worker --loglevel=INFO --concurrency=1 -Q email_queue',
-        'celery -A zon_prep_ocr_project worker --loglevel=INFO --concurrency=1 -Q parsing_queue'
+        'celery -A zon_prep_ocr_project worker --loglevel=INFO --concurrency=1 -Q email_queue -P gevent',
+        'celery -A zon_prep_ocr_project worker --loglevel=INFO --concurrency=1 -Q parsing_queue -P gevent'
     ]
 
     # Define arguments here
