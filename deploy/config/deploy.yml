@@ -24,7 +24,7 @@ env:
 servers:
   web:
     hosts:
-      - 35.245.54.153
+      - 35.188.245.231
     options:
       expose: "8000"
       network: zon_prep_ocr_project-network
@@ -34,25 +34,17 @@ servers:
       traefik.http.routers.zon_prep_ocr_project_secure.rule: Host(`testing-zonprep.dgmouris.com`)
       traefik.http.routers.zon_prep_ocr_project_secure.tls: true
       traefik.http.routers.zon_prep_ocr_project_secure.tls.certresolver: letsencrypt
-  celery_email_parser:
+  celery:
     hosts:
-      - 35.245.54.153
-    cmd: celery -A zon_prep_ocr_project worker --loglevel=INFO --concurrency=1 -Q email_queue
-    options:
-      network: zon_prep_ocr_project-network
-    labels:
-      traefik.enable: "false"
-  celery_parsing_queue:
-    hosts:
-      - 35.245.54.153
-    cmd: celery -A zon_prep_ocr_project worker --loglevel=INFO --concurrency=1 -Q parsing_queue
+      - 35.188.245.231
+    cmd: celery -A zon_prep_ocr_project worker --loglevel=INFO --concurrency=1 -Q email_queue,parsing_queue
     options:
       network: zon_prep_ocr_project-network
     labels:
       traefik.enable: "false"
   celerybeat:
     hosts:
-      - 35.245.54.153
+      - 35.188.245.231
     cmd: celery -A zon_prep_ocr_project beat -l INFO
     options:
       network: zon_prep_ocr_project-network
@@ -92,7 +84,7 @@ accessories:
   # docker hostname will be 'zon_prep_ocr_project-redis'
   redis:
     image: redis
-    host: 35.245.54.153
+    host: 35.188.245.231
     options:
       network: zon_prep_ocr_project-network
 
