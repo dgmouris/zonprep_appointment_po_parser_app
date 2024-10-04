@@ -8,12 +8,13 @@ class ZonprepAppointmentCSVUploadForm(forms.Form):
     send_to_external_fullfillment = forms.BooleanField(
         label='Send to External Fullfillment',
         required=False,
+        initial=True,
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
     )
 
     def clean_csv_file(self):
         csv_file = self.cleaned_data['csv_file']
-        
+
         if not csv_file.name.endswith('.csv'):
             raise forms.ValidationError('This file is not a CSV file.')
 
