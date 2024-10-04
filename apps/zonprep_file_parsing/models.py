@@ -39,6 +39,7 @@ class ZonprepAppointment(BaseModel):
     p_carrier = models.CharField(max_length=255, null=True, blank=True)
     p_carrier_request_delivery_date = models.CharField(max_length=255, null=True, blank=True)
     p_cartons = models.CharField(max_length=255, null=True, blank=True)
+    p_actual_arrival_date = models.CharField(max_length=255, null=True, blank=True)
     p_dock_door = models.CharField(max_length=255, null=True, blank=True)
     p_freight_terms = models.CharField(max_length=255, null=True, blank=True)
     p_scac = models.CharField(max_length=255, null=True, blank=True)
@@ -51,7 +52,7 @@ class ZonprepAppointment(BaseModel):
 
     # mapping of the fields in the "parse_appointment_pdf_to_dict" to the fields in the model.
     PARSED_FIELDS_MAPPING = {
-        'Actual Arrival Date': 'p_appointment_date',
+        'Actual Arrival Date': 'p_actual_arrival_date',
         'Appointment Id': 'p_appointment_id',
         'Appointment type': 'p_appointment_type',
         'Carrier': 'p_carrier',
@@ -199,6 +200,7 @@ class ZonprepAppointment(BaseModel):
         gmail_utils = GmailUtility()
 
         subject = self.get_email_subject()
+        # this is going to return true if successful and fail loudly if not.
         message = gmail_utils.send_email(
             to=external_fulfillment.email,
             subject=subject,

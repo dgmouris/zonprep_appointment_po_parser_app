@@ -29,6 +29,10 @@ const APPOINTMENT_DATA_MAPPING = {
     "label": "Carrier Request Delivery Date",
     "type": "str"
   },
+  "p_actual_arrival_date": {
+    "label": "Actual Arrival Date",
+    "type": "str"
+  },
   "p_cartons": {
     "label": "Cartons",
     "type": "str"
