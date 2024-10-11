@@ -47,7 +47,7 @@ class Command(BaseCommand):
                     / average_pallet_count_per_scac[appt.p_scac]["appointments"]
                 )
 
-        report_csv_rows = [["scac", "average_pallets", "appointments", "count"]]
+        report_csv_rows = [["scac", "average_pallets", "pallet_count", "appointments"]]
         for scac, values, in average_pallet_count_per_scac.items():
             report_csv_rows.append([
                 scac,
