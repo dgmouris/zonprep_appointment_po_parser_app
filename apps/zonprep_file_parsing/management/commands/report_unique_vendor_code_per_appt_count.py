@@ -62,12 +62,7 @@ class Command(BaseCommand):
                 report_csv_rows.append([scac, vendor, count])
         report_name = 'random_reports/unique_vendor_code_per_appointment_count.csv'
         with open(report_name, mode='w', newline='') as file:
-            # writer = csv.DictWriter(file, fieldnames=["scac", "vendor", "count"])
-            # Get the keys from the first dictionary as the header
             writer = csv.writer(file)
-            # # Write the header
-            # writer.writeheader()
-
             # # Write the rows
             writer.writerows(report_csv_rows)
 
