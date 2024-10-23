@@ -15,7 +15,7 @@ from pathlib import Path
 import environ
 from django.utils.translation import gettext_lazy
 
-# needed for account 
+# needed for account
 from google.oauth2 import service_account
 
 
@@ -440,3 +440,11 @@ else:
     GS_CREDENTIALS = service_account.Credentials.from_service_account_info(
         CLOUD_STORAGE_CREDENTIALS_DICT
     )
+
+# Email Credentials Backend
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
