@@ -116,7 +116,7 @@ class ZonprepAppointment(BaseModel):
     def move_state_to_sent_to_fulfillment():
         appointments = ZonprepAppointment.objects.filter(
             state=ZonprepAppointmentState.CREATED
-        )
+        )[:200]
         ZonprepAppointment.send_appointment_emails(appointments)
 
     # Appointment Parser
@@ -130,7 +130,7 @@ class ZonprepAppointment(BaseModel):
         # fetch all records in the SENT_TO_FULFILLMENT state
         appointments = ZonprepAppointment.objects.filter(
             state=ZonprepAppointmentState.SENT_TO_FULFILLMENT
-        )
+        )[:200]
         ZonprepAppointment.process_and_parse_appointments(appointments)
 
     # Helper methods.
@@ -186,8 +186,8 @@ class ZonprepAppointment(BaseModel):
             time.sleep(9)
             current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             logging.info(F"Sent email for {current_time}")
-            print(F"Sent email for {current_time}")
             message = appointment.send_external_appointment_request_email()
+            print(F"Sent email for {current_time}")
             if message:
                 appointment.state = ZonprepAppointmentState.SENT_TO_FULFILLMENT
                 appointment.save()
