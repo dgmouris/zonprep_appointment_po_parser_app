@@ -25,11 +25,22 @@ class ZonprepAppointmentState(Enum):
 
     def __str__(self):
         return self.value
-    
+
 class ZonprepPurchaseOrderState(Enum):
     CREATED_WITH_PARSED_FIELDS = "CreatedWithParsedFields"
     SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED = "SuccessSalesforceAppointmentDataUploaded"
     ERROR_SALESFORCE_APPOINTMENT_DATA_UPLOADED = "ErrorSalesforceAppointmentDataUploaded"
+    # everything below this line is for the TypeC Image parsing.
+    SENT_TO_FULFILLMENT_FOR_SKU = "SentToFulfillmentForSKU"
+    FULFILLMENT_NOT_REPLIED_FOR_SKU = "FulfillmentNotRepliedForSKU"
+    FULFILLMENT_RAW_ATTACHMENT_DOWNLOADED_FOR_SKU = "FulfillmentRawAttachmentDownloadedForSKU"
+    INCORRECT_FULFILLMENT_ATTACHMENT_RECEIVED_FOR_SKU = "IncorrectFulfillmentAttachmentRecievedForSKU"
+    SUCCESSFUL_OCR_ATTACHMENT_PARSE_FOR_SKU = "SuccessfulOCRAttachmentParseForSKU"
+    ERROR_OCR_ATTACHMENT_PARSE_FOR_SKU = "ErrorOCRAttachmentParseForSKU"
+    INVALID_ATTACHMENT_FOR_SKU = "InvalidAttachmentForSKU"
+    SUCCESSFUL_PO_SKU_DATA_CREATED = "SuccessfulAppointmentPODataCreatedForSKU"
+    SUCCESS_SALESFORCE_PO_SKU_DATA_UPLOADED = "SuccessSalesforceAppointmentDataUploaded"
+    ERROR_SALESFORCE_PO_SKU_DATA_UPLOADED = "ErrorSalesforceAppointmentDataUploaded"
 
     def __str__(self):
         return self.value
@@ -65,15 +76,15 @@ document.
 This is going to be that the document has cause
 - InvalidAttachment
 This is going to be the state of the documents
-that we'll want to ignore in our statistics 
+that we'll want to ignore in our statistics
 - SuccessfulAppointmentInfoUpdated
-This is going to mean the Appointment info has 
+This is going to mean the Appointment info has
 been saved to the database.
 - SuccessfulAppointmentPODataCreated
 this is going to mean that the POs have been
 created from the appointment.
 - SuccessSalesforceAppointmentDataUploaded
-this is going to be an appointment that has 
+this is going to be an appointment that has
 all of the data uploaded data to salesforce
 - ErrorSalesforceAppointmentDataUploaded
 an error has occurred and we'll have to do something
