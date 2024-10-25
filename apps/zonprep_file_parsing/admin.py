@@ -4,10 +4,11 @@ from django.contrib import admin
 
 from .models import (ZonprepAppointment, ExternalFulfillmentEmail,
                      ZonprepPurchaseOrder, ZonprepAppointmentTask,
-                     GmailTokenCredentials)
+                     GmailTokenCredentials, ZonprepPOImageAttachments)
 
 admin.site.register(ZonprepAppointment)
 admin.site.register(ExternalFulfillmentEmail)
 admin.site.register(ZonprepPurchaseOrder)
+admin.site.register(ZonprepPOImageAttachments)
 admin.site.register(ZonprepAppointmentTask)
 admin.site.register(GmailTokenCredentials)

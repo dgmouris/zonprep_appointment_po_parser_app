@@ -2,6 +2,8 @@ from datetime import datetime
 import re
 import time
 import logging
+from io import BytesIO
+from PIL import Image
 
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -15,7 +17,7 @@ from .gmail_utils import GmailUtility
 from .salesforce_utils import SalesforceUtils, SalesForceCreateError
 
 from .file_parsers.TypeAPDFParser import TypeAPDFParser
-
+from .file_parsers.TypeCImageParser import TypeCImageParser
 
 class ZonprepAppointment(BaseModel):
     # appointment id given by the zonprep
@@ -555,7 +557,92 @@ class ZonprepPurchaseOrder(BaseModel):
         )[:200]
         ZonprepPurchaseOrder.send_purchase_order_emails(purchase_orders)
 
+    # Purchase Order Parser
+    @staticmethod
+    def parse_type_c_purchase_orders_from_emails():
+        purchase_orders = ZonprepPurchaseOrder.objects.filter(
+            state=ZonprepPurchaseOrderState.SENT_TO_FULFILLMENT_FOR_PO_SKU
+        ).prefetch_related("image_attachments")[:200]
+        ZonprepPurchaseOrder.process_and_parse_purchase_orders(purchase_orders)
+
+
     # Helper methods.
+    @staticmethod
+    def process_and_parse_purchase_orders(purchase_orders):
+        for po in purchase_orders:
+            # get the email hopefully returned with an attachment.
+            attachment = po.get_type_c_purchase_order_email_attachment()
+            # continue to the next one if there is no attachment.
+
+            # check to make sure that the attachment is the correct one.
+
+            if not attachment:
+                # TODO: add the day timeout logic.
+                continue
+
+            if  po.image_attachments.all().exists():
+                # delete the old attachment.
+                po.image_attachments.all().delete()
+            # save the attachment to the database.
+            po.save_image_attachment(attachment)
+
+            # move the state to FULFILLMENT_RAW_ATTACHMENT_DOWNLOADED
+            po.state = ZonprepPurchaseOrderState.FULFILLMENT_RAW_ATTACHMENT_DOWNLOADED_FOR_PO_SKU
+            po.save()
+
+            # parse the email attachement and set the state to SUCCESSFUL_OCR_ATTACHMENT_PARSE
+            po_sku_data = po.parse_purchase_order_image_attachment()
+            po.raw_parsed_attachment_json_field = po_sku_data
+            po.state = ZonprepPurchaseOrderState.SUCCESSFUL_OCR_ATTACHMENT_PARSE_FOR_PO_SKU
+            po.save()
+
+            # convert the and move the the state to SUCCESSFUL_PO_SKU_DATA_CREATED
+
+    # read through the raw parsed fields and ensure they are saved correctly
+    def create_all_po_skus_from_raw_parsed_fields(self):
+        # Todo
+        pass
+
+    def parse_purchase_order_image_attachment(self):
+        # get the image attachment
+        image_attachment = self.image_attachments.first()
+        if not image_attachment:
+            return None
+        # get the image attachment bytes
+        image_attachment_bytes = image_attachment.image_attachment.read()
+        # parse the images.
+        type_c_image_parser = TypeCImageParser(image_attachment_bytes)
+        po_sku_data = type_c_image_parser.extract_text()
+        return po_sku_data
+
+
+    def get_type_c_purchase_order_email_attachment(self):
+        gmail_utils = GmailUtility()
+        query_string = self.get_gmail_attachment_query_string()
+
+        all_email = gmail_utils.search_emails(query_string, ['INBOX'])
+        # if there are no emails return early.
+        if not all_email:
+            return
+        # get the latest email with an attachment
+        all_email.reverse()
+        latest_email = all_email[0]
+
+        # get message detail
+        message_attachment = gmail_utils.get_message_attachment(latest_email)
+
+        # note that this is going to be in bytes.
+        return message_attachment
+
+    def get_gmail_attachment_query_string(self):
+        # note: I only need to have the appointment id as the subject.
+        return F"subject:{self.p_po_number} has:attachment"
+
+    def save_image_attachment(self, attachment_bytes):
+        # image_content = ContentFile(attachment_bytes)
+        attachment_instance = ZonprepPOImageAttachments.save_image_attachment(self, attachment_bytes)
+        return attachment_instance
+
     '''
     This function will send out emails to the external fulfillment team
     and move the state to SENT_TO_FULFILLMENT
@@ -627,16 +714,56 @@ class ZonprepPOImageAttachments(BaseModel):
     )
     raw_parsed_attachment_json_field = models.JSONField(null=True, blank=True)
 
+
+    # SCALE FACTOR FOR IMAGE RESIZING
+    SCALE_FACTOR = 2.0
+
     def __str__(self):
         return F"PO Image Attachment: {self.purchase_order.p_po_number}"
 
-    def save_image_attachment(self, attachment_bytes):
-        image_content = ContentFile(attachment_bytes)
+    '''
+    This will change when we have multiple images for a purchase order.
+    '''
+    @staticmethod
+    def save_image_attachment(purchase_order, attachment_bytes):
+        # do a check if there's already an attachment in the future.
 
-        self.image_attachment.save(
-            F"{self.purchase_order.p_po_number}.png",
-            image_content
+        # first handle the single file case.
+        file_name= F"{purchase_order.p_po_number}_image_0.png"
+        image_content = ContentFile(
+            attachment_bytes,
+            name = file_name
         )
+
+        resized_image_content = ZonprepPOImageAttachments.resize_content_file(image_content)
+
+        po_attachment = ZonprepPOImageAttachments(
+            purchase_order=purchase_order
+        )
+
+        po_attachment.image_attachment.save(
+            file_name,
+            resized_image_content
+        )
+        po_attachment.save()
+        return po_attachment
+
+    @staticmethod
+    def resize_content_file(content_file):
+        # Use ContentFile as a file-like object
+        image = Image.open(content_file)
+
+        scale_factor = ZonprepPOImageAttachments.SCALE_FACTOR
+        new_width = int(image.width * scale_factor)
+        new_height = int(image.height * scale_factor)
+        # Perform operations on the image (e.g., resizing)
+        resized_image = image.resize((new_width, new_height), Image.LANCZOS)  # Resize to 200x200 pixels for example
+        # Save the modified image to a new ContentFile
+        new_image_io = BytesIO()
+        resized_image.save(new_image_io, format="PNG")
+        new_content_file = ContentFile(new_image_io.getvalue(), name=image.filename)
+
+        return new_content_file
 
 
 class ZonprepPurchaseOrderSKU(BaseModel):
