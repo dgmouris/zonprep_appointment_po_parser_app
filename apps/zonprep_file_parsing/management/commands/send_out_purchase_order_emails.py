@@ -11,3 +11,4 @@ class Command(BaseCommand):
         ZonprepPurchaseOrder.move_state_to_sent_to_fulfillment()
 
         self.stdout.write("Complete!")
+
