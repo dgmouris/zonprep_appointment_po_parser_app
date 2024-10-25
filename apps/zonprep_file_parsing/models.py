@@ -456,6 +456,10 @@ class ZonprepPurchaseOrder(BaseModel):
     p_vendor = models.CharField(max_length=255, null=True, blank=True)
     p_shipment_label = models.CharField(max_length=255, null=True, blank=True)
 
+    # fields for the image parsing and sku creation.
+    raw_parsed_attachment_json_field = models.JSONField(null=True, blank=True)
+
+
     PARSED_FIELDS_MAPPING = {
         "shipment_id": "p_shipment_id",
         "pallets": "p_pallets",
@@ -472,7 +476,7 @@ class ZonprepPurchaseOrder(BaseModel):
     }
 
     def __str__(self):
-        return F"PO: {self.p_po_number}, Appointment: {self.appointment}"
+        return F"PO: {self.p_po_number} - {self.state}, Appointment: {self.appointment}"
 
     '''
     This function is going to be used in the parser to create the purchase orders.
@@ -527,13 +531,144 @@ class ZonprepPurchaseOrder(BaseModel):
             # log something here in the future.
             print(F"Created PO: {zonprep_purchase_order}")
 
+    # State functions
+
+    # move the state to send this to the fulfilment team.
+    # note this will be unique to the purchase order.
+    def move_state_to_scheduled_to_send_to_fulfillment(self):
+        self.state = ZonprepPurchaseOrderState.SCHEDULED_TO_SEND_TO_FULFILLMENT
+        self.save()
+
+    '''
+    This functions sends out Purchase Order emails to the external fulfillment team
+
+    fetches purchase orders in the SCHEDULED_TO_SEND_TO_FULFILLMENT state,
+    sends emails out to the external fulfillment team,
+    and moves the state to SENT_TO_FULFILLMENT_FOR_PO_SKU
+
+    Note: this will have to be in a cron job/Celery beat task.
+    '''
+    @staticmethod
+    def move_state_to_sent_to_fulfillment():
+        purchase_orders = ZonprepPurchaseOrder.objects.filter(
+            state= ZonprepPurchaseOrderState.SCHEDULED_TO_SEND_TO_FULFILLMENT
+        )[:200]
+        ZonprepPurchaseOrder.send_purchase_order_emails(purchase_orders)
+
     # Helper methods.
+    '''
+    This function will send out emails to the external fulfillment team
+    and move the state to SENT_TO_FULFILLMENT
+    Note: this will be used in retry logic as well.
+    '''
+    @staticmethod
+    def send_purchase_order_emails(purchase_orders):
+        for po in purchase_orders:
+            # send the email but wait 20 seconds before sending the next one.
+            time.sleep(9)
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            logging.info(F"Sent email for {current_time}")
+            message = po.send_external_purchase_order_request_email()
+            print(F"Sent email for {current_time}")
+            if message:
+                po.state = ZonprepPurchaseOrderState.SENT_TO_FULFILLMENT_FOR_PO_SKU
+                po.save()
+
+    # this is only going to send the email and not perform the state change.
+    def send_external_purchase_order_request_email(self):
+        external_fulfillment = ExternalFulfillmentEmail.load()
+        gmail_utils = GmailUtility()
+
+        subject = self.get_email_subject()
+        message_text = self.get_message_text()
+        # this is going to return true if successful and fail loudly if not.
+        message = gmail_utils.send_email(
+            to=external_fulfillment.email,
+            subject=subject,
+            message_text=message_text
+        )
+        return message
+
+    def get_email_subject(self):
+        return F"PO Shipments Items for: {self.p_po_number}"
+
+    def get_message_text(self):
+        return F"""
+        for the  PO: {self.p_po_number} please return table view containing data:
+        - fnsku
+        - iaid
+        - msku
+        - weight
+        - shipped quantity
+        - recieved quantity
+        - update date
+        - create date
+        - prep details
+        """
+
     @staticmethod
     def get_item_or_first(my_list, index):
         try:
             return my_list[index]
         except IndexError:
             return my_list[0]
+
+class ZonprepPOImageAttachments(BaseModel):
+    purchase_order = models.ForeignKey(
+        ZonprepPurchaseOrder,
+        on_delete=models.CASCADE,
+        related_name='image_attachments'
+    )
+    image_attachment = models.FileField(
+        upload_to='zonprep_po_image_attachments/',
+        null=True,
+        blank=True,
+        storage=CustomGoogleCloudStorage()
+    )
+    raw_parsed_attachment_json_field = models.JSONField(null=True, blank=True)
+
+    def __str__(self):
+        return F"PO Image Attachment: {self.purchase_order.p_po_number}"
+
+    def save_image_attachment(self, attachment_bytes):
+        image_content = ContentFile(attachment_bytes)
+
+        self.image_attachment.save(
+            F"{self.purchase_order.p_po_number}.png",
+            image_content
+        )
+
+
+class ZonprepPurchaseOrderSKU(BaseModel):
+    purchase_order = models.ForeignKey(
+        ZonprepPurchaseOrder,
+        on_delete=models.CASCADE,
+        related_name='skus'
+    )
+
+    # parsed fields prepended with p_
+    # anchored left to right in the parsing.
+    p_fnsku = models.CharField(max_length=255, null=True, blank=True)
+    p_iaid = models.CharField(max_length=255, null=True, blank=True)
+    p_msku = models.CharField(max_length=255, null=True, blank=True)
+    p_weight = models.CharField(max_length=255, null=True, blank=True) # multi line in parsing.
+    p_shipped_quantity = models.CharField(max_length=255, null=True, blank=True)
+    p_recieved_quantity = models.CharField(max_length=255, null=True, blank=True)
+
+    # anchored right to left in parsing
+    p_update_date = models.CharField(max_length=255, null=True, blank=True)
+    p_create_date = models.CharField(max_length=255, null=True, blank=True)
+
+    # fields for prep details which is its' own line.
+    p_prep_details_item_labelling = models.CharField(max_length=255, null=True, blank=True)
+    p_prep_details_item_labelling_owner = models.CharField(max_length=255, null=True, blank=True)
+    p_prep_details_item_labelling_cost_owner = models.CharField(max_length=255, null=True, blank=True)
+    p_prep_details_polybagging = models.CharField(max_length=255, null=True, blank=True)
+    p_prep_details_polybagging_owner = models.CharField(max_length=255, null=True, blank=True)
+    p_prep_details_polybagging_cost_owner = models.CharField(max_length=255, null=True, blank=True)
+
+    def __str__(self):
+        return F"SKU: {self.sku} for PO: {self.purchase_order.p_po_number}"
 
 '''
 This singleton model is solely for the purpose of storing
