@@ -598,10 +598,234 @@ class ZonprepPurchaseOrder(BaseModel):
 
             # convert the and move the the state to SUCCESSFUL_PO_SKU_DATA_CREATED
 
-    # read through the raw parsed fields and ensure they are saved correctly
     def create_all_po_skus_from_raw_parsed_fields(self):
-        # Todo
-        pass
+        sku_data = self._get_formatted_po_skus_data_from_raw_parsed_fields()
+
+        # all_mapped_sku_data = self.create_all_po_skus_from_raw_parsed_fields()
+        for mapped_sku_data in sku_data:
+            ZonprepPurchaseOrderSKU.create_po_sku_model_from_raw_po_sku_fields(self, mapped_sku_data)
+
+
+
+    # read through the raw parsed fields and ensure they are saved correctly
+    '''
+        The data from the above will be 3 rows in total for each sku
+        - row 1:
+            cols_0 to cols_9 or cols_10
+            - have most of the data.
+        - row 2: last to match col with x_min and x_max
+            cols_0
+                - units for last cols_3 of last row
+            cols_1
+                - date for cols_
+            cols_2
+                - date
+        - row 3
+            prep details which will be it's own thing.
+    '''
+    def _get_formatted_po_skus_data_from_raw_parsed_fields(self):
+        current_row = None
+        # this is going to create a set of inval
+        in_valid_col_values = {
+            "fnsku",
+            "iaid",
+        }
+
+        data_mapping = {
+            "fnsku": {
+                "x_coordinates": None,
+                "multi_line": False,
+                "anchor": "left",
+                "col_from_anchor": 0,
+                "in_prepped_details": False
+            },
+            "iaid": {
+                "x_coordinates": None,
+                "multi_line": False,
+                "anchor": "left",
+                "col_from_anchor": 1,
+                "in_prepped_details": False
+            },
+            "msku": {
+                "x_coordinates": None,
+                "multi_line": True,
+                "anchor": "left",
+                "col_from_anchor": 2,
+                "in_prepped_details": False
+            },
+            "weight": {
+                "x_coordinates": None,
+                "multi_line": True,
+                "anchor": "left",
+                "col_from_anchor": 3,
+                "in_prepped_details": False
+            },
+            "quantity": {
+                "x_coordinates": None,
+                "multi_line": False,
+                "anchor": "left",
+                "col_from_anchor": 4,
+                "in_prepped_details": False
+            },
+            "created_date": {
+                "x_coordinates": None,
+                "multi_line": True,
+                "anchor": "right",
+                "col_from_anchor": 1,
+                "in_prepped_details": False
+            },
+            "update_date": {
+                "x_coordinates": None,
+                "multi_line": True,
+                "anchor": "right",
+                "col_from_anchor": 0,
+                "in_prepped_details": False
+            },
+        }
+
+        all_mapped_sku_data = []
+
+        for row_index, sku_data_row in enumerate(self.raw_parsed_attachment_json_field):
+
+            col_values_only = [col["value"].lower() for col in sku_data_row.values()]
+            col_values_only_set = set(col_values_only)
+            # check to see if if there's intersection with bad values
+            intersection_of_invalid_cols = in_valid_col_values.intersection(col_values_only_set)
+            # if there are any invalid columns then we're going to skip this row.
+            if (len(list(intersection_of_invalid_cols)) > 0
+                and current_row is None):
+                continue
+
+            # check if the columns are greater than 7
+            if len(col_values_only) < 7:
+                # this is the first row.
+                continue
+
+            current_row = sku_data_row
+            next_row = ZonprepPurchaseOrder.get_next_row(
+                self.raw_parsed_attachment_json_field,
+                row_index ,
+            )
+            mapped_sku_data = {}
+            # PART 1: Handle the row with most of the data in it that's not prep details.
+            for mapping_col, mapping_value in data_mapping.items():
+                # get the x coordinates
+                x_coordinates = mapping_value["x_coordinates"]
+                # get the anchor
+                anchor = mapping_value["anchor"]
+                # get the column from the anchor
+                col_from_anchor = mapping_value["col_from_anchor"]
+                # get the multi line
+                multi_line = mapping_value["multi_line"]
+
+                # get the raw parsed data column based on the read anchor (left or right)
+                raw_parsed_data_col = ""
+                if anchor == "left":
+                    raw_parsed_data_col = F"cols_{col_from_anchor}"
+                if anchor == "right":
+                    raw_parsed_data_col = F"cols_{len(current_row) - col_from_anchor - 1}"
+
+                current_col = current_row[raw_parsed_data_col]
+                # update the x coordinates if they don't exist for anchors.
+                if x_coordinates is None:
+                    data_mapping[mapping_col]["x_coordinates"] = [current_col["x_min"], current_col["x_max"]]
+
+                # get the value from the next row if it's multi line.
+                # check if it's aligned with the 0 x coordinate from the current_row
+                next_row_value = ""
+                if multi_line:
+                    PIXEL_TOLERANCE = 20
+                    for next_row_col, next_row_mapping in next_row.items():
+                        # check that it's within the pixel tolerance
+                        if (next_row_mapping["x_min"] <= current_col["x_min"] + PIXEL_TOLERANCE and
+                            next_row_mapping["x_max"] >= current_col["x_max"] - PIXEL_TOLERANCE):
+                            # set the next row value
+
+                            next_row_value = next_row[next_row_col]["value"]
+                            break
+
+                # update the value
+                mapped_sku_data[mapping_col] = F"{current_col['value']} {next_row_value}".strip()
+
+            # PART 2: Handle the prep details row.
+            prep_details_row = ZonprepPurchaseOrder.get_next_row(
+                self.raw_parsed_attachment_json_field,
+                row_index + 1,
+            )
+            prep_details_row_more = ZonprepPurchaseOrder.get_next_row(
+                self.raw_parsed_attachment_json_field,
+                row_index + 2,
+            )
+            # get details from prep details row.
+            prep_details_row = ZonprepPurchaseOrder.get_next_row(
+                self.raw_parsed_attachment_json_field,
+                row_index + 1,
+            )
+            prep_details_row_more = ZonprepPurchaseOrder.get_next_row(
+                self.raw_parsed_attachment_json_field,
+                row_index + 2,
+            )
+            # get the prep details value if it's upper case or not.
+            prep_details_value = (ZonprepPurchaseOrder.get_prep_details_value_if_valid(prep_details_row) +
+                                  ZonprepPurchaseOrder.get_prep_details_value_if_valid(prep_details_row_more)
+                                  ).upper().replace("_", " ")
+
+
+            # this prep_details_value string normally takes the value of the following:
+            # 'PREP DETAILS: ITEM_LABELING: {OWNER: MERCHANT, COST OWNER: NOT_APPLICABLE }'
+            PREP_DETAILS_INDEX = 1 # once you split on the colon.
+            MORE_INFO_INDEX = 1 # once you split on the {.
+            OWNER_INDEX = 0 # once you split on the ,
+            COST_OWNER_INDEX = 1 # once you split on the ,
+            prep_details_info_value = ZonprepPurchaseOrder.strip_all_weird_characters(
+                prep_details_value.split(":")[PREP_DETAILS_INDEX]
+            )
+
+            owner_info_value = ZonprepPurchaseOrder.strip_all_weird_characters(
+                prep_details_value.split("{")[MORE_INFO_INDEX].split(",")[OWNER_INDEX]
+
+            )
+            cost_owner_info_value = ZonprepPurchaseOrder.strip_all_weird_characters(
+                prep_details_value.split("{")[MORE_INFO_INDEX].split(",")[COST_OWNER_INDEX]
+            )
+            if prep_details_info_value == "ITEM LABELING":
+                mapped_sku_data["prep_details_item_labelling"] = prep_details_info_value
+                mapped_sku_data["prep_details_item_labelling_owner"] = owner_info_value
+                mapped_sku_data["prep_details_item_labelling_cost_owner"] = cost_owner_info_value
+
+            # handle the poly bagging case.
+            # if prep_details_info_value == "ITEM POLYBAGGING":
+            #     mapped_sku_data["prep_details_item_labelling"] = prep_details_info_value
+            #     mapped_sku_data["prep_details_item_labelling_owner"] = owner_info_value
+            #     mapped_sku_data["prep_details_item_labelling_cost_owner"] = cost_owner_info_value
+
+            all_mapped_sku_data.append(mapped_sku_data)
+
+
+        return all_mapped_sku_data
+
+
+
+
+
+
+    @staticmethod
+    def strip_all_weird_characters(data):
+        return data.replace("_", " ").replace("{", "").replace("}", "").strip()
+
+
+    # this will return the first column or just ignore the data
+    # this is needed
+    @staticmethod
+    def get_prep_details_value_if_valid(data):
+        return next(iter(data.values()), "").get("value", "") if len(data) == 1 else ""
+
+    @staticmethod
+    def get_next_row(data, index):
+        try:
+            return data[index + 1]
+        except IndexError:
+            return []
 
     def parse_purchase_order_image_attachment(self):
         # get the image attachment
@@ -795,7 +1019,36 @@ class ZonprepPurchaseOrderSKU(BaseModel):
     p_prep_details_polybagging_cost_owner = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
-        return F"SKU: {self.sku} for PO: {self.purchase_order.p_po_number}"
+        return F"SKU: {self.p_fnsku} for PO: {self.purchase_order.p_po_number}"
+
+    @staticmethod
+    def create_po_sku_model_from_raw_po_sku_fields(purchase_order, mapped_po_sku_data):
+        SKU_PARSED_FIELDS_MAPPING = {
+            "fnsku": "p_fnsku",
+            "iaid": "p_iaid",
+            "msku": "p_msku",
+            "weight": "p_weight",
+            "quantity": "p_shipped_quantity",
+            "create_date": "p_created_date",
+            "update_date": "p_update_date",
+            "prep_details_item_labelling": "p_prep_details_item_labelling",
+            "prep_details_item_labelling_owner": "p_prep_details_item_labelling_owner",
+            "prep_details_item_labelling_cost_owner": "p_prep_details_item_labelling_cost_owner",
+            "prep_details_item_polybagging": "p_prep_details_item_polybagging",
+            "prep_details_item_polybagging_owner": "p_prep_details_item_polybagging_owner",
+            "prep_details_item_polybagging_cost_owner": "p_prep_details_item_polybagging_cost_owner",
+        }
+        # create the model data.
+        po_sku_model_data = { SKU_PARSED_FIELDS_MAPPING[key]: value
+                             for key, value in mapped_po_sku_data.items()
+                             if key in SKU_PARSED_FIELDS_MAPPING}
+
+        po_sku =  ZonprepPurchaseOrderSKU.objects.create(
+            purchase_order=purchase_order,
+            **po_sku_model_data
+        )
+
+        print(F"Created PO SKU: {po_sku}")
 
 '''
 This singleton model is solely for the purpose of storing
