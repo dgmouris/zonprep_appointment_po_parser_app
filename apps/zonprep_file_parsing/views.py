@@ -21,12 +21,13 @@ from rest_framework.response import Response
 from .state import ZonprepAppointmentState
 from .seralizers import (ReadOnlySearchAppointmentOrPOSerializer,
                          ZonprepAppointmentSerializer,
-                         ZonprepPurchaseOrderSerializer)
+                         ZonprepPurchaseOrderDetailSerializer,
+                         )
 from .models import ZonprepAppointment, ZonprepPurchaseOrder
 
 
 class ZonprepPurchaseOrderViewset(viewsets.ReadOnlyModelViewSet):
-    serializer_class = ZonprepPurchaseOrderSerializer
+    serializer_class = ZonprepPurchaseOrderDetailSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):

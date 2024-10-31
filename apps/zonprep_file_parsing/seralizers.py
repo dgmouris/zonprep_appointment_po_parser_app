@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import ZonprepAppointment, ZonprepPurchaseOrder
+from .models import ZonprepAppointment, ZonprepPurchaseOrder, ZonprepPurchaseOrderSKU
 
 class ReadOnlySearchAppointmentOrPOSerializer(serializers.Serializer):
     value = serializers.CharField(max_length=255)
@@ -18,9 +18,32 @@ class ZonprepPurchaseOrderSerializer(serializers.ModelSerializer):
         model = ZonprepPurchaseOrder
         fields = '__all__'  # Include all fields from the model
 
+    # i don't skus to be included in the serializer
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Remove the field you want to exclude
+        self.fields.pop('skus', None)
 
 class ZonprepAppointmentSerializer(serializers.ModelSerializer):
     purchase_orders = ZonprepPurchaseOrderSerializer(many=True)
     class Meta:
         model = ZonprepAppointment
         fields = '__all__'  # Include all fields from the model
+
+class ZonprepPurchaseOrderSKUSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ZonprepPurchaseOrderSKU
+        fields = '__all__'  # Include all fields from the model
+
+class ZonprepPurchaseOrderSKUSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ZonprepPurchaseOrderSKU
+        fields = '__all__'  # Include all fields from the model
+
+
+class ZonprepPurchaseOrderDetailSerializer(serializers.ModelSerializer):
+    skus = ZonprepPurchaseOrderSKUSerializer(many=True)
+    class Meta:
+        model = ZonprepPurchaseOrder
+        fields = '__all__'  # Include all fields from the model
+        depth = 1
