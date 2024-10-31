@@ -11,7 +11,7 @@ const steps = [
   },
   {
     name: 'Data Uploaded to Salesforce',
-    description: 'Sent to fulfillment and waiting for their response',
+    description: 'PO data uploaded to salesforce',
     href: '#',
     status: 'upcoming',
     valid_states: [
@@ -19,15 +19,74 @@ const steps = [
       "ErrorSalesforceAppointmentDataUploaded",
     ],
   },
+  {
+    name: 'Scheduled to send to fulfillment for details sku data',
+    description: 'Scheduled to be sent',
+    href: '#',
+    status: 'upcoming',
+    valid_states: [
+      "ScheduledToSendToFulfillment"
+    ],
+  },
+  {
+    name: 'Sent to external fulfillment and waiting for response',
+    description: 'Sent to fulfillment and waiting for their response on the PO SKU data',
+    href: '#',
+    status: 'upcoming',
+    valid_states: [
+      "SentToFulfillmentForSKU",
+    ],
+    in_valid_states: [
+      "FulfillmentNotRepliedForSKU"
+    ]
+  },
+  {
+    name: 'Downloaded attachment successfully.',
+    description: 'Downloaded attachment ready to get parsed.',
+    href: '#',
+    status: 'upcoming',
+    valid_states: [
+      "FulfillmentRawAttachmentDownloadedForSKU",
+    ],
+    in_valid_states: [
+      "IncorrectFulfillmentAttachmentRecievedForSKU"
+    ]
+  },
+  {
+    name: 'Downloaded attachment successfully.',
+    description: 'Downloaded attachment ready to get parsed.',
+    href: '#',
+    status: 'upcoming',
+    valid_states: [
+      "SuccessfulOCRAttachmentParseForSKU",
+    ],
+    in_valid_states: [
+      "ErrorOCRAttachmentParseForSKU",
+      "InvalidAttachmentForSKU"
+    ]
+  },
+  {
+    name: 'SKUs created and PO data parsed successfully',
+    description: 'Skus created and table should be below',
+    href: '#',
+    status: 'upcoming',
+    valid_states: [
+      "SuccessfulAppointmentPODataCreatedForSKU",
+    ],
+    in_valid_states: []
+  },
+
 ]
 
-const STEPS = steps 
+
+
+const STEPS = steps
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
-export default function PurchaseOrderStatus({po}) {  
+export default function PurchaseOrderStatus({po}) {
   const [purchaseOrderSteps, setPurchaseOrderSteps] = useState(STEPS)
 
   const calculateStep = () => {

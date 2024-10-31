@@ -9,6 +9,7 @@ import {
 
 import PurchaseOrderInfoDisplay from './PurchaseOrderInfoDisplay';
 import PurchaseOrderStatus from '../utils/PurchaseOrderStatus';
+import PurchaseOrderSKUTable from './PurchaseOrderSKUTable';
 
 export default function PurchaseOrderPage() {
 
@@ -40,7 +41,6 @@ export default function PurchaseOrderPage() {
 
   return (
     <div>
-
       <div className="flex flex-col md:flex-row  md:gap-4">
         <div className="w-full md:w-2/3">
           <PurchaseOrderInfoDisplay data={data}/>
@@ -48,7 +48,12 @@ export default function PurchaseOrderPage() {
         <div className="w-full md:w-1/3">
           <PurchaseOrderStatus po={data} />
         </div>
-    </div>
+      </div>
+      <div className="flex flex-col md:flex-row  md:gap-4">
+        <div className="w-full">
+          <PurchaseOrderSKUTable skus={data.skus} />
+        </div>
+      </div>
     </div>
   )
 }
