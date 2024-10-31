@@ -46,4 +46,3 @@ class ZonprepPurchaseOrderDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ZonprepPurchaseOrder
         fields = '__all__'  # Include all fields from the model
-        depth = 1
