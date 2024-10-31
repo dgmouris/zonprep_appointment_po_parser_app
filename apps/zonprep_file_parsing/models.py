@@ -563,19 +563,19 @@ class ZonprepPurchaseOrder(BaseModel):
         purchase_orders = ZonprepPurchaseOrder.objects.filter(
             state=ZonprepPurchaseOrderState.SENT_TO_FULFILLMENT_FOR_PO_SKU
         ).prefetch_related("image_attachments")[:200]
-        ZonprepPurchaseOrder.process_and_parse_purchase_orders(purchase_orders)
 
+        ZonprepPurchaseOrder.process_and_parse_purchase_orders(purchase_orders)
 
     # Helper methods.
     @staticmethod
     def process_and_parse_purchase_orders(purchase_orders):
         for po in purchase_orders:
+            print(F"Processing PO: {po.p_po_number}")
             # get the email hopefully returned with an attachment.
             attachment = po.get_type_c_purchase_order_email_attachment()
             # continue to the next one if there is no attachment.
 
             # check to make sure that the attachment is the correct one.
-
             if not attachment:
                 # TODO: add the day timeout logic.
                 continue
@@ -597,6 +597,15 @@ class ZonprepPurchaseOrder(BaseModel):
             po.save()
 
             # convert the and move the the state to SUCCESSFUL_PO_SKU_DATA_CREATED
+            try:
+                po.create_all_po_skus_from_raw_parsed_fields()
+                po.state = ZonprepPurchaseOrderState.SUCCESSFUL_PO_SKU_DATA_CREATED
+                po.save()
+            except Exception as e:
+                po.state = ZonprepPurchaseOrderState.ERROR_OCR_ATTACHMENT_PARSE_FOR_PO_SKU
+                po.save()
+
+            # this is going to be where I send all of the po skus to salesforce.
 
     def create_all_po_skus_from_raw_parsed_fields(self):
         sku_data = self._get_formatted_po_skus_data_from_raw_parsed_fields()
@@ -604,8 +613,6 @@ class ZonprepPurchaseOrder(BaseModel):
         # all_mapped_sku_data = self.create_all_po_skus_from_raw_parsed_fields()
         for mapped_sku_data in sku_data:
             ZonprepPurchaseOrderSKU.create_po_sku_model_from_raw_po_sku_fields(self, mapped_sku_data)
-
-
 
     # read through the raw parsed fields and ensure they are saved correctly
     '''
@@ -629,6 +636,7 @@ class ZonprepPurchaseOrder(BaseModel):
         in_valid_col_values = {
             "fnsku",
             "iaid",
+            "eastern time"
         }
 
         data_mapping = {
@@ -637,49 +645,42 @@ class ZonprepPurchaseOrder(BaseModel):
                 "multi_line": False,
                 "anchor": "left",
                 "col_from_anchor": 0,
-                "in_prepped_details": False
             },
             "iaid": {
                 "x_coordinates": None,
                 "multi_line": False,
                 "anchor": "left",
                 "col_from_anchor": 1,
-                "in_prepped_details": False
             },
             "msku": {
                 "x_coordinates": None,
                 "multi_line": True,
                 "anchor": "left",
                 "col_from_anchor": 2,
-                "in_prepped_details": False
             },
             "weight": {
                 "x_coordinates": None,
                 "multi_line": True,
                 "anchor": "left",
                 "col_from_anchor": 3,
-                "in_prepped_details": False
             },
             "quantity": {
                 "x_coordinates": None,
                 "multi_line": False,
                 "anchor": "left",
                 "col_from_anchor": 4,
-                "in_prepped_details": False
             },
-            "created_date": {
+            "create_date": {
                 "x_coordinates": None,
                 "multi_line": True,
                 "anchor": "right",
                 "col_from_anchor": 1,
-                "in_prepped_details": False
             },
             "update_date": {
                 "x_coordinates": None,
                 "multi_line": True,
                 "anchor": "right",
                 "col_from_anchor": 0,
-                "in_prepped_details": False
             },
         }
 
@@ -696,9 +697,11 @@ class ZonprepPurchaseOrder(BaseModel):
                 and current_row is None):
                 continue
 
-            # check if the columns are greater than 7
-            if len(col_values_only) < 7:
-                # this is the first row.
+            # check if the columns are less than 7 and than 11 then we should skip them.
+            # this is the sweet spot of columns.
+            if len(col_values_only) < 7 or len(col_values_only) > 11:
+                # this is the first row or invalid rows so skip them.
+                # the prep
                 continue
 
             current_row = sku_data_row
@@ -736,9 +739,9 @@ class ZonprepPurchaseOrder(BaseModel):
                 if multi_line:
                     PIXEL_TOLERANCE = 20
                     for next_row_col, next_row_mapping in next_row.items():
-                        # check that it's within the pixel tolerance
+                        # check that it's within the pixel tolerance within the x_min.
                         if (next_row_mapping["x_min"] <= current_col["x_min"] + PIXEL_TOLERANCE and
-                            next_row_mapping["x_max"] >= current_col["x_max"] - PIXEL_TOLERANCE):
+                            next_row_mapping["x_min"] >= current_col["x_min"] - PIXEL_TOLERANCE):
                             # set the next row value
 
                             next_row_value = next_row[next_row_col]["value"]
@@ -756,69 +759,82 @@ class ZonprepPurchaseOrder(BaseModel):
                 self.raw_parsed_attachment_json_field,
                 row_index + 2,
             )
-            # get details from prep details row.
-            prep_details_row = ZonprepPurchaseOrder.get_next_row(
-                self.raw_parsed_attachment_json_field,
-                row_index + 1,
-            )
-            prep_details_row_more = ZonprepPurchaseOrder.get_next_row(
-                self.raw_parsed_attachment_json_field,
-                row_index + 2,
-            )
             # get the prep details value if it's upper case or not.
-            prep_details_value = (ZonprepPurchaseOrder.get_prep_details_value_if_valid(prep_details_row) +
-                                  ZonprepPurchaseOrder.get_prep_details_value_if_valid(prep_details_row_more)
-                                  ).upper().replace("_", " ")
+            prep_details_value = ZonprepPurchaseOrder.get_prep_details_value(
+                prep_details_row,
+                prep_details_row_more
+            )
 
+            # if it's empty there was an issue, just add the data and move on.
+            if prep_details_value.strip() == "":
+                all_mapped_sku_data.append(mapped_sku_data)
+                continue
 
             # this prep_details_value string normally takes the value of the following:
             # 'PREP DETAILS: ITEM_LABELING: {OWNER: MERCHANT, COST OWNER: NOT_APPLICABLE }'
-            PREP_DETAILS_INDEX = 1 # once you split on the colon.
-            MORE_INFO_INDEX = 1 # once you split on the {.
-            OWNER_INDEX = 0 # once you split on the ,
-            COST_OWNER_INDEX = 1 # once you split on the ,
-            prep_details_info_value = ZonprepPurchaseOrder.strip_all_weird_characters(
-                prep_details_value.split(":")[PREP_DETAILS_INDEX]
-            )
+            # this is going to be formatted into a dictionary.
+            formatted_prep_details_data = ZonprepPurchaseOrder.format_prep_details_from_raw_string(prep_details_value)
 
-            owner_info_value = ZonprepPurchaseOrder.strip_all_weird_characters(
-                prep_details_value.split("{")[MORE_INFO_INDEX].split(",")[OWNER_INDEX]
-
-            )
-            cost_owner_info_value = ZonprepPurchaseOrder.strip_all_weird_characters(
-                prep_details_value.split("{")[MORE_INFO_INDEX].split(",")[COST_OWNER_INDEX]
-            )
-            if prep_details_info_value == "ITEM LABELING":
-                mapped_sku_data["prep_details_item_labelling"] = prep_details_info_value
-                mapped_sku_data["prep_details_item_labelling_owner"] = owner_info_value
-                mapped_sku_data["prep_details_item_labelling_cost_owner"] = cost_owner_info_value
-
-            # handle the poly bagging case.
-            # if prep_details_info_value == "ITEM POLYBAGGING":
-            #     mapped_sku_data["prep_details_item_labelling"] = prep_details_info_value
-            #     mapped_sku_data["prep_details_item_labelling_owner"] = owner_info_value
-            #     mapped_sku_data["prep_details_item_labelling_cost_owner"] = cost_owner_info_value
-
+            # add the formatted_prep_details_data to the mapped_sku_data
+            for formatted_prep_details in formatted_prep_details_data:
+                mapped_sku_data = {**mapped_sku_data, **formatted_prep_details}
+            mapped_sku_data["all_prep_details"] = formatted_prep_details_data
             all_mapped_sku_data.append(mapped_sku_data)
 
-
         return all_mapped_sku_data
-
-
-
-
-
 
     @staticmethod
     def strip_all_weird_characters(data):
         return data.replace("_", " ").replace("{", "").replace("}", "").strip()
 
+    # format prep details so it's digestable
+    @staticmethod
+    def format_prep_details_from_raw_string(prep_details_string):
+        # you're going to get a string like this:
+        # 'Prep details: ITEM_LABELING: {Owner: MERCHANT, Cost owner: NOT_APPLICABLE }, ITEM_POLYBAGGING: {Owner: MERCHANT, Cost owner: NOT_APPLICABLE }'
+
+        # this is going to look like ['Owner: MERCHANT, Cost owner: NOT_APPLICABLE ', 'Owner: MERCHANT, Cost owner: NOT_APPLICABLE ']
+        owner_details = re.findall(r'\{([^}]+)\}', prep_details_string)
+        # this is going to give a list that looks like ['item_labeling', ' item_polybagging']
+        prep_details_titles = re.sub(
+                r'\{([^}]+)\}', '', prep_details_string
+            ).lower(
+            ).replace(
+            "prep details:", ""
+            ).replace(
+            ":", ""
+            ).strip(
+            ).split(",")
+
+        # going to make an array of these values until I know how to handle them.
+        formatted_prep_details = []
+        for index in range(len(prep_details_titles)):
+            key_prepended =F"prep_details_{prep_details_titles[index].strip()}"
+            owner, cost_owner = owner_details[index].split(",")
+            formatted_prep_details.append({
+                F"{key_prepended}": prep_details_titles[index].strip(),
+                F"{key_prepended}_owner": owner.strip(),
+                F"{key_prepended}_cost_owner": cost_owner.strip()
+            })
+        return formatted_prep_details
 
     # this will return the first column or just ignore the data
     # this is needed
     @staticmethod
-    def get_prep_details_value_if_valid(data):
-        return next(iter(data.values()), "").get("value", "") if len(data) == 1 else ""
+    def get_prep_details_value(prep_details_row_one, prep_details_row_two):
+        # get the first
+        first_row = " ".join(
+            [value["value"] for value in prep_details_row_one.values()]
+        ).strip()
+        # if it ends with } it's probably somthing like "Prep details: ITEM_LABELING: {Owner: MERCHANT, Cost owner: NOT_APPLICABLE }"
+        if first_row.endswith("}"):
+            return first_row
+
+        second_row = " ".join(
+            [value["value"] for value in prep_details_row_two.values()]
+        ).strip()
+
+        return F"{first_row} {second_row}".strip()
 
     @staticmethod
     def get_next_row(data, index):
@@ -1017,6 +1033,7 @@ class ZonprepPurchaseOrderSKU(BaseModel):
     p_prep_details_polybagging = models.CharField(max_length=255, null=True, blank=True)
     p_prep_details_polybagging_owner = models.CharField(max_length=255, null=True, blank=True)
     p_prep_details_polybagging_cost_owner = models.CharField(max_length=255, null=True, blank=True)
+    p_all_prep_details = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return F"SKU: {self.p_fnsku} for PO: {self.purchase_order.p_po_number}"
@@ -1029,14 +1046,15 @@ class ZonprepPurchaseOrderSKU(BaseModel):
             "msku": "p_msku",
             "weight": "p_weight",
             "quantity": "p_shipped_quantity",
-            "create_date": "p_created_date",
+            "create_date": "p_create_date",
             "update_date": "p_update_date",
-            "prep_details_item_labelling": "p_prep_details_item_labelling",
-            "prep_details_item_labelling_owner": "p_prep_details_item_labelling_owner",
-            "prep_details_item_labelling_cost_owner": "p_prep_details_item_labelling_cost_owner",
-            "prep_details_item_polybagging": "p_prep_details_item_polybagging",
-            "prep_details_item_polybagging_owner": "p_prep_details_item_polybagging_owner",
-            "prep_details_item_polybagging_cost_owner": "p_prep_details_item_polybagging_cost_owner",
+            "prep_details_item_labeling": "p_prep_details_item_labelling",
+            "prep_details_item_labeling_owner": "p_prep_details_item_labelling_owner",
+            "prep_details_item_labeling_cost_owner": "p_prep_details_item_labelling_cost_owner",
+            "prep_details_item_polybagging": "p_prep_details_polybagging",
+            "prep_details_item_polybagging_owner": "p_prep_details_polybagging_owner",
+            "prep_details_item_polybagging_cost_owner": "p_prep_details_polybagging_cost_owner",
+            "all_prep_details": "p_all_prep_details",
         }
         # create the model data.
         po_sku_model_data = { SKU_PARSED_FIELDS_MAPPING[key]: value
