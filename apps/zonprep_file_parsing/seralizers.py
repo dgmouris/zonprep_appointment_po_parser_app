@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from .models import ZonprepAppointment, ZonprepPurchaseOrder, ZonprepPurchaseOrderSKU
+from .models import (ZonprepAppointment, ZonprepPurchaseOrder,
+                     ZonprepPurchaseOrderSKU, ZonprepPOImageAttachments)
 
 class ReadOnlySearchAppointmentOrPOSerializer(serializers.Serializer):
     value = serializers.CharField(max_length=255)
@@ -40,9 +41,15 @@ class ZonprepPurchaseOrderSKUSerializer(serializers.ModelSerializer):
         model = ZonprepPurchaseOrderSKU
         fields = '__all__'  # Include all fields from the model
 
+class ZonprepPOImageAttachmentsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ZonprepPOImageAttachments
+        fields = '__all__'  # Include all fields from the model
+
 
 class ZonprepPurchaseOrderDetailSerializer(serializers.ModelSerializer):
     skus = ZonprepPurchaseOrderSKUSerializer(many=True)
+    image_attachments = ZonprepPOImageAttachmentsSerializer(many=True)
     class Meta:
         model = ZonprepPurchaseOrder
         fields = '__all__'  # Include all fields from the model

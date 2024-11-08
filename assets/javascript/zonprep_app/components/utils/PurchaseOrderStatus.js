@@ -53,8 +53,8 @@ const steps = [
     ]
   },
   {
-    name: 'Downloaded attachment successfully.',
-    description: 'Downloaded attachment ready to get parsed.',
+    name: 'OCR Performed successfully',
+    description: 'Raw Data extracted from Image',
     href: '#',
     status: 'upcoming',
     valid_states: [
