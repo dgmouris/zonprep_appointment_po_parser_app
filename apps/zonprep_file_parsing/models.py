@@ -118,7 +118,7 @@ class ZonprepAppointment(BaseModel):
     def move_state_to_sent_to_fulfillment():
         appointments = ZonprepAppointment.objects.filter(
             state=ZonprepAppointmentState.CREATED
-        )[:200]
+        )[:400]
         ZonprepAppointment.send_appointment_emails(appointments)
 
     # Appointment Parser
@@ -129,10 +129,11 @@ class ZonprepAppointment(BaseModel):
     '''
     @staticmethod
     def parse_type_a_appointments_from_emails():
+
         # fetch all records in the SENT_TO_FULFILLMENT state
         appointments = ZonprepAppointment.objects.filter(
             state=ZonprepAppointmentState.SENT_TO_FULFILLMENT
-        )[:200]
+        ).order_by('?')[:400]
         ZonprepAppointment.process_and_parse_appointments(appointments)
 
     # Helper methods.
