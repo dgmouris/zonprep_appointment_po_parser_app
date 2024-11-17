@@ -25,12 +25,12 @@ class Command(BaseCommand):
                 every=5,
                 period=IntervalSchedule.MINUTES, # for production.
             )
-        
+
         # Create Task: Send Email To Fulfilment Worker
         name = "Send Email To Fulfilment Worker"
-        
+
         already_exists = self._does_task_exist(name)
-        
+
         if not already_exists:
             send_out_emails_task = PeriodicTask.objects.create(
                 name='Send Email To Fulfilment Worker',
@@ -47,7 +47,7 @@ class Command(BaseCommand):
 
         # Create Task: Parsing Type A Email Attachment Worker
         name = "Parsing Type A Email Attachment Worker"
-        
+
         already_exists = self._does_task_exist(name)
         if not already_exists:
             parse_type_a_email_attachments_task = PeriodicTask.objects.create(
@@ -58,6 +58,24 @@ class Command(BaseCommand):
 
             if parse_type_a_email_attachments_task:
                 self.stdout.write(F"Task: '{parse_type_a_email_attachments_task.name}' Successfully")
+            else:
+                self.stdout.write(F"Task: '{name}' Creation Failed")
+        else:
+            self.stdout.write(F"Task: '{name}' Already Exists, nothing to do.")
+
+        # Create Task: Parsing Type C Email Attachment Worker
+        name = "Parsing Type C Email Attachment Worker"
+
+        already_exists = self._does_task_exist(name)
+        if not already_exists:
+            parse_type_c_email_attachments_task = PeriodicTask.objects.create(
+                name='Parsing Type C Email Attachment Worker',
+                task='apps.zonprep_file_parsing.tasks.parse_type_c_email_attachments_task',
+                interval=schedule,
+            )
+
+            if parse_type_c_email_attachments_task:
+                self.stdout.write(F"Task: '{parse_type_c_email_attachments_task.name}' Successfully")
             else:
                 self.stdout.write(F"Task: '{name}' Creation Failed")
         else:

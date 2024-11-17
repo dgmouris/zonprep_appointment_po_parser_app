@@ -1122,6 +1122,7 @@ class ZonprepAppointmentTask(BaseModel):
     # there's two types of tasks that can be run
     PARSING_TYPE_A_APPOINTMENTS_TASK = "ParsingTypeAAppointments"
     SEND_APPOINTMENT_EMAILS_TASK = "SendAppointmentEmails"
+    PARSING_TYPE_C_PURCHASE_ORDERS_TASK = "ParseTypeCPurchaseOrders"
 
     task_name = models.CharField(max_length=255)
     state = models.CharField(max_length=255) # ZonprepAppointmentTaskState
