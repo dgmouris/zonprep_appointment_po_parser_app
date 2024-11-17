@@ -27,7 +27,7 @@ servers:
   web:
     hosts:
       # - 35.188.245.231 # zonprep-server-1
-      - 34.85.145.179 # zonprep-production-2-easyocr
+      - 35.245.129.206 # zonprep-production-2-easyocr
     options:
       expose: "8000"
       network: zon_prep_ocr_project-network
@@ -40,7 +40,7 @@ servers:
   celery:
     hosts:
       # - 35.188.245.231 # zonprep-server-1
-      - 34.85.145.179 # zonprep-production-2-easyocr
+      - 35.245.129.206 # zonprep-production-2-easyocr
     cmd: celery -A zon_prep_ocr_project worker --loglevel=INFO --concurrency=1 -Q email_queue,parsing_queue
     options:
       network: zon_prep_ocr_project-network
@@ -49,7 +49,7 @@ servers:
   celerybeat:
     hosts:
       # - 35.188.245.231 # zonprep-server-1
-      - 34.85.145.179 # zonprep-production-2-easyocr
+      - 35.245.129.206 # zonprep-production-2-easyocr
     cmd: celery -A zon_prep_ocr_project beat -l INFO
     options:
       network: zon_prep_ocr_project-network
@@ -92,7 +92,7 @@ accessories:
   redis:
     image: redis
     # host: 35.188.245.231 # zonprep-production-2-easyocr
-    host: 34.85.145.179 # zonprep-production-2-easyocr
+    host: 35.245.129.206 # zonprep-production-2-easyocr
     options:
       network: zon_prep_ocr_project-network
 
