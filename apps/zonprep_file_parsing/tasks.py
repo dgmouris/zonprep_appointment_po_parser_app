@@ -50,7 +50,7 @@ def parse_type_a_email_attachments_task():
     ----------------------
     """)
 
-@shared_task(queue="parsing_queue_type_c")
+@shared_task(queue="parsing_queue")
 def parse_type_c_email_attachments_task():
     logging.info("""
     ----------------------
