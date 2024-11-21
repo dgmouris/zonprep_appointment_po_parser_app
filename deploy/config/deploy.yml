@@ -16,11 +16,13 @@ env:
     - CLOUD_STORAGE_NAME
     - EMAIL_HOST_USER
     - EMAIL_HOST_PASSWORD
+    - EASYOCR_MODULE_PATH
     - SALESFORCE_USERNAME
     - SALESFORCE_PASSWORD
     - SALESFORCE_SECURITY_TOKEN
     - TURNSTILE_KEY
     - TURNSTILE_SECRET
+
 
 # https://kamal-deploy.org/docs/configuration#using-different-roles-for-servers
 servers:
@@ -78,6 +80,7 @@ builder:
     - CLOUD_STORAGE_NAME
     - EMAIL_HOST_USER
     - EMAIL_HOST_PASSWORD
+    - EASYOCR_MODULE_PATH
 
 # See https://kamal-deploy.org/docs/configuration#using-another-registry-than-docker-hub
 registry:

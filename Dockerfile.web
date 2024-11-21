@@ -71,8 +71,22 @@ RUN addgroup --system django \
     && adduser --system --ingroup django django \
     # also create the Django media directory with appropriate permissions
     && mkdir -p /code/media \
-	&& chown -R django:django /code/media
+	&& chown -R django:django /code/media \
+    # also create EasyOCR directory with permissions
+    && mkdir -p /code/.EasyOCR \
+	&& chown -R django:django /code/.EasyOCR
 
+# easyocr model download
+# Download the file using wget
+RUN wget https://github.com/JaidedAI/EasyOCR/releases/download/v1.3/english_g2.zip -P /code/
+
+# Unzip the downloaded file
+RUN unzip /code/english_g2.zip -d /code/.EasyOCR/models
+
+# Clean up: Remove the ZIP file after extraction (optional)
+RUN rm /code/english_g2.zip
+
+# build all wheels
 COPY --from=build-python /wheels /wheels
 COPY ./requirements /requirements
 RUN --mount=type=cache,target=/root/.cache \
@@ -85,6 +99,7 @@ RUN --mount=type=cache,target=/root/.cache \
     # -r /requirements/extra-ocr-requirements.txt \
 
 WORKDIR /code
+
 
 # copy the key for cloud storage to a file.
 RUN --mount=type=secret,id=CLOUD_STORAGE_NAME \
