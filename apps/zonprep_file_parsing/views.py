@@ -7,7 +7,7 @@ apps/web/views.py
 
 under the "home" function
 '''
-from datetime import datetime
+from datetime import datetime, time
 
 from django.utils.html import escape
 from django.db.models import Q
@@ -22,9 +22,10 @@ from .state import ZonprepAppointmentState
 from .seralizers import (ReadOnlySearchAppointmentOrPOSerializer,
                          ZonprepAppointmentSerializer,
                          ZonprepPurchaseOrderDetailSerializer,
+                         ZonprepReportsSerializer
                          )
-from .models import ZonprepAppointment, ZonprepPurchaseOrder
-
+from .models import ZonprepAppointment, ZonprepPurchaseOrder, ZonprepReports
+from .reports import Report
 
 class ZonprepPurchaseOrderViewset(viewsets.ReadOnlyModelViewSet):
     serializer_class = ZonprepPurchaseOrderDetailSerializer
@@ -243,3 +244,59 @@ class SearchAppointmentOrPOViewset(viewsets.ViewSet):
         result_serializer = ReadOnlySearchAppointmentOrPOSerializer(data=results, many=True)
         result_serializer.is_valid(raise_exception=True)
         return Response(result_serializer.data)
+
+
+class ZoneprepReportsViewset(viewsets.ModelViewSet):
+    serializer_class = ZonprepReportsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return  ZonprepReports.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        # Customize the list method if needed
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, report_id=None, *args, **kwargs):
+        # Override the retrieve method to filter by report_id
+        try:
+            report = ZonprepReports.objects.filter(report_id=report_id).first()
+        except ZonprepReports.DoesNotExist:
+            raise NotFound("ZonprepReports with this report_id does not exist")
+        serializer = self.get_serializer(report)
+        return Response(serializer.data)
+
+
+    @action(
+        detail=False,
+        methods=['post'],
+        url_path='generate/(?P<report_name>[^/.]+)/(?P<start_date>[^/.]+)/to/(?P<end_date>[^/.]+)'
+    )
+    def average_pallet_count_per_scac(self, request, report_name=None, start_date=None, end_date=None):
+        start = datetime.combine(datetime.strptime(start_date, "%Y-%m-%d").date(), time.min)
+        end = datetime.combine(datetime.strptime(end_date, "%Y-%m-%d").date(), time.max)
+
+        # get the report
+        report_factory = Report.get_report(report_name)
+        report_factory.generate_report(start, end)
+
+        report = report_factory.save_report()
+        serializer = self.get_serializer(report)
+
+        return Response(serializer.data)
+
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="get_by_type/(?P<report_type>[^/.]+)"
+    )
+    def get_by_type(self, request, report_type=None):
+        try:
+            report = ZonprepReports.objects.filter(report_type=report_type)
+        except ZonprepReports.DoesNotExist:
+            raise NotFound("ZonprepReports with this report_type does not exist")
+        serializer = self.get_serializer(report, many=True)
+        return Response(serializer.data)

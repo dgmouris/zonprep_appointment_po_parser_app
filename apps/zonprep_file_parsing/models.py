@@ -1160,3 +1160,18 @@ class ZonprepAppointmentTask(BaseModel):
         latest_object.successful = successful
         latest_object.error_details = error_details
         latest_object.save()
+
+
+class ZonprepReports(BaseModel):
+    report_type = models.CharField(max_length=255)
+    report_document = models.FileField(
+        upload_to='zonprep_reports/',
+        null=True,
+        blank=True,
+        storage=CustomGoogleCloudStorage()
+    )
+    report_start_date = models.DateField(blank=True, null=True)
+    report_end_date = models.DateField(blank=True, null=True)
+
+    def __str__(self):
+        return F"Report: {self.report_type}, Created at: {self.created_at}"
