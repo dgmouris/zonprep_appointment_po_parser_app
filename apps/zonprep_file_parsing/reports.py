@@ -22,6 +22,8 @@ class Report(ABC):
             return AveragePalletCountPerScac()
         elif report_type == UniqueVendorCodePerApptCount.REPORT_TYPE:
             return UniqueVendorCodePerApptCount()
+        elif report_type == PurchaseOrdersToFacility.REPORT_TYPE:
+            return PurchaseOrdersToFacility()
         return None
     # classes to be implemented
     # you need to set the start, end, and report_file class vars
@@ -169,6 +171,65 @@ class UniqueVendorCodePerApptCount(Report):
             # scac = key
             for vendor, count in vendor_for_scac.items():
                 report_csv_rows.append([scac, vendor, count])
+
+        with tempfile.NamedTemporaryFile(delete=False, mode='w+', suffix='.csv') as temp_file:
+            writer = csv.writer(temp_file)
+            # # Write the rows
+            writer.writerows(report_csv_rows)
+            #
+            temp_file.flush()
+            #
+            self.report_file = temp_file.name
+            # Return the path to the temporary file
+            return temp_file
+
+        return None
+
+class PurchaseOrdersToFacility(Report):
+    REPORT_TYPE = 'purchase_orders_to_facility'
+
+    def generate_report(self, start, end):
+        self.start = start
+        self.end = end
+
+        appts = ZonprepAppointment.objects.filter(
+            state=ZonprepAppointmentState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED,
+            created_at__range=[start, end]
+        ).prefetch_related("purchase_orders")
+
+        facilty_po_count_mapping = {}
+
+        for appt in appts:
+            count_of_po = len(appt.purchase_orders.all())
+            if appt.fc_code is None:
+                continue
+            if appt.fc_code not in facilty_po_count_mapping.keys():
+                facilty_po_count_mapping[appt.fc_code] = {
+                    "po_count": count_of_po,
+                    "appt_count": 1,
+                    "average": count_of_po
+                }
+            else:
+                facilty_po_count_mapping[appt.fc_code]["po_count"] = (
+                    facilty_po_count_mapping[appt.fc_code]["po_count"]
+                    + count_of_po)
+                facilty_po_count_mapping[appt.fc_code]["appt_count"] = (
+                    facilty_po_count_mapping[appt.fc_code]["appt_count"]
+                    + 1
+                )
+                facilty_po_count_mapping[appt.fc_code]["average"] = (
+                    facilty_po_count_mapping[appt.fc_code]["po_count"]
+                    / facilty_po_count_mapping[appt.fc_code]["appt_count"]
+                )
+
+        report_csv_rows = [["facility_code", "average_po_count", "po_count", "appt_count"]]
+        for fc_code, values, in facilty_po_count_mapping.items():
+            report_csv_rows.append([
+                fc_code,
+                values["average"],
+                values["po_count"],
+                values["appt_count"]
+            ])
 
         with tempfile.NamedTemporaryFile(delete=False, mode='w+', suffix='.csv') as temp_file:
             writer = csv.writer(temp_file)
