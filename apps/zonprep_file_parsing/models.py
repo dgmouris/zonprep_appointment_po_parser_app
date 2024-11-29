@@ -215,10 +215,9 @@ class ZonprepAppointment(BaseModel):
         # this is going to return true if successful and fail loudly if not.
         errors = []
 
-
-
         # Step 1: Try sending with the gmail api from the pod@freight-corp.com account
         try:
+            print("Step 1: Trying to send with gmail api")
             message = gmail_utils.send_email(
                 to=external_fulfillment.email,
                 subject=subject,
@@ -227,10 +226,12 @@ class ZonprepAppointment(BaseModel):
             print("Sent with gmail api")
             return message
         except Exception as e:
+            print("Unsuccessful with gmail api, trying next step")
             errors.append(e)
 
         # Step 2: Try sending with the gmail smtp server from pod-no-reply@freight-corp.com account
         try:
+            print("Step 2: Trying to send with gmail smtp")
             gmail_smtp_utils.send_email(
                 to=external_fulfillment.email,
                 subject=subject,
@@ -239,11 +240,13 @@ class ZonprepAppointment(BaseModel):
             print("Sent with gmail smtp")
             return True
         except Exception as e:
+            print("Unsuccessful with gmail smtp, trying next step")
             errors.append(e)
 
         # Step 3: Try Sending with Sengrid Working.
         # sent through pod@freight-corp.com
         try:
+            print("Step 3: Trying to send with sendgrid")
             message = sendgrid_utils.send_email(
                 sender="pod@freight-corp.com",
                 to=external_fulfillment.email,
@@ -253,6 +256,7 @@ class ZonprepAppointment(BaseModel):
             print("Sent with sendgrid")
             return message
         except Exception as e:
+            print("Unsuccessful with sendgrid, Failed all steps")
             errors.append(e)
 
         # there was an error in sending the email and it should
