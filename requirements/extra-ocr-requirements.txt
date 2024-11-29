@@ -3,3 +3,7 @@ torch==2.5.0 --index-url https://download.pytorch.org/whl/cpu
 torchaudio==2.5.0 --index-url https://download.pytorch.org/whl/cpu
 torchvision==0.20.0 --index-url https://download.pytorch.org/whl/cpu
 opencv-python-headless==4.10.0.84
+# needed for amazon web services
+django-ses==4.2.0
+# needed for sendgrid
+sendgrid==6.11.0

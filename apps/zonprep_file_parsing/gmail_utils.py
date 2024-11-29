@@ -190,35 +190,35 @@ class GmailUtility:
         message = message_text
         recipient_list = [to]
         # note below is using django send email and not the class itself it is not recursive
-        try:
-            send_mail(subject, message, sender, recipient_list)
-            return True
-        except Exception as e:
-            raise
+        # try:
+        #     send_mail(subject, message, sender, recipient_list)
+        #     return True
+        # except Exception as e:
+        #     raise
 
         # Using the gmail API just removed for now.
         # This is limited to 2000 send requests a day so we'll test the above to see
         # if it improves at all remove this code.
-        # if sender is None:
-        #     sender = self.gmail_token_creds.gmail_user_id
+        if sender is None:
+            sender = self.gmail_token_creds.gmail_user_id
 
-        # message = MIMEText(message_text)
-        # message['to'] = to
-        # message['from'] = sender
-        # message['subject'] = subject
-        # raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
-        # message = {'raw': raw_message}
-        # """Send an email message."""
+        message = MIMEText(message_text)
+        message['to'] = to
+        message['from'] = sender
+        message['subject'] = subject
+        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+        message = {'raw': raw_message}
+        """Send an email message."""
 
-        # try:
-        #     message = self.service.users().messages().send(
-        #         userId=self.user_id,
-        #         body=message
-        #     ).execute()
-        #     print(f'Message Id: {message["id"]}')
-        #     return message
-        # except HttpError as error:
-        # raise GmailSendingError(f'An error occurred: {error}')
+        try:
+            message = self.service.users().messages().send(
+                userId=self.user_id,
+                body=message
+            ).execute()
+            print(f'Message Id: {message["id"]}')
+            return message
+        except HttpError as error:
+            raise GmailSendingError(f'An error occurred: {error}')
 
     def get_message_attachment(self, email=None, message_detail=None):
         if email is None:

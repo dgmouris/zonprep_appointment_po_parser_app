@@ -448,3 +448,15 @@ EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+# used in GMAIL SMTP Utility
+EMAIL_REPLY_TO = "pod@freight-corp.com" # make this an env var when you need to.
+
+# See if aws ever responds.
+# AWS_ACCESS_KEY_ID=env("AWS_ACCESS_KEY_ID", default="")
+# AWS_SECRET_ACCESS_KEY=env("AWS_SECRET_ACCESS_KEY", default="")
+
+# EMAIL_BACKEND = "django_ses.SESBackend"
+# AWS_SES_REGION_NAME = "us-east-1"
+# AWS_SES_REGION_ENDPOINT = "email.us-east-1.amazonaws.com"
+
+SENDGRID_API_KEY = env("SENDGRID_API_KEY", default="")
