@@ -46,6 +46,19 @@ class Report(ABC):
             return report
         return None
 
+    def save_csv_temp_file(self, report_csv_rows):
+        with tempfile.NamedTemporaryFile(delete=False, mode='w+', suffix='.csv') as temp_file:
+            writer = csv.writer(temp_file)
+            # # Write the rows
+            writer.writerows(report_csv_rows)
+            #
+            temp_file.flush()
+            #
+            self.report_file = temp_file.name
+            # Return the path to the temporary file
+            return temp_file
+
+        return None
 
 class AveragePalletCountPerScac(Report):
     REPORT_TYPE = 'average_pallet_count_per_scac'
@@ -101,18 +114,8 @@ class AveragePalletCountPerScac(Report):
                 values["appointments"]
             ])
 
-        with tempfile.NamedTemporaryFile(delete=False, mode='w+', suffix='.csv') as temp_file:
-            writer = csv.writer(temp_file)
-            # # Write the rows
-            writer.writerows(report_csv_rows)
-            #
-            temp_file.flush()
-            #
-            self.report_file = temp_file.name
-            # Return the path to the temporary file
-            return temp_file
+        return self.save_csv_temp_file(report_csv_rows)
 
-        return None
 
 class UniqueVendorCodePerApptCount(Report):
     REPORT_TYPE = 'unique_vendor_code_per_appointment_count'
@@ -172,18 +175,8 @@ class UniqueVendorCodePerApptCount(Report):
             for vendor, count in vendor_for_scac.items():
                 report_csv_rows.append([scac, vendor, count])
 
-        with tempfile.NamedTemporaryFile(delete=False, mode='w+', suffix='.csv') as temp_file:
-            writer = csv.writer(temp_file)
-            # # Write the rows
-            writer.writerows(report_csv_rows)
-            #
-            temp_file.flush()
-            #
-            self.report_file = temp_file.name
-            # Return the path to the temporary file
-            return temp_file
+        return self.save_csv_temp_file(report_csv_rows)
 
-        return None
 
 class PurchaseOrdersToFacility(Report):
     REPORT_TYPE = 'purchase_orders_to_facility'
@@ -231,15 +224,4 @@ class PurchaseOrdersToFacility(Report):
                 values["appt_count"]
             ])
 
-        with tempfile.NamedTemporaryFile(delete=False, mode='w+', suffix='.csv') as temp_file:
-            writer = csv.writer(temp_file)
-            # # Write the rows
-            writer.writerows(report_csv_rows)
-            #
-            temp_file.flush()
-            #
-            self.report_file = temp_file.name
-            # Return the path to the temporary file
-            return temp_file
-
-        return None
+        return self.save_csv_temp_file(report_csv_rows)
