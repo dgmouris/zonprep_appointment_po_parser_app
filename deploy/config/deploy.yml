@@ -16,6 +16,7 @@ env:
     - CLOUD_STORAGE_NAME
     - EMAIL_HOST_USER
     - EMAIL_HOST_PASSWORD
+    - SENDGRID_API_KEY
     - EASYOCR_MODULE_PATH
     - SALESFORCE_USERNAME
     - SALESFORCE_PASSWORD
@@ -81,6 +82,9 @@ builder:
     - EMAIL_HOST_USER
     - EMAIL_HOST_PASSWORD
     - EASYOCR_MODULE_PATH
+    - SENDGRID_API_KEY
+    - SALESFORCE_USERNAME
+    - SALESFORCE_PASSWORD
 
 # See https://kamal-deploy.org/docs/configuration#using-another-registry-than-docker-hub
 registry:
