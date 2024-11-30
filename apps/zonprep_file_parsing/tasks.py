@@ -57,7 +57,7 @@ def parse_type_c_email_attachments_task():
     Parsing Emails recieved from External Fulfillment Task...
     """)
     # check to see if the task is running
-    task_name = ZonprepAppointmentTask.PARSING_TYPE_C_APPOINTMENTS_TASK
+    task_name = ZonprepAppointmentTask.PARSING_TYPE_C_PURCHASE_ORDERS_TASK
     is_running = ZonprepAppointmentTask.is_running(task_name)
     if is_running:
         logging.info("Task is already running, skipping...")
