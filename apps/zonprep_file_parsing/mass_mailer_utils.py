@@ -24,13 +24,14 @@ class MassMailerUtility():
         try:
             print("Step 1: Trying to send with gmail api")
             message = self.gmail_utils.send_email(
-                to=self.xternal_fulfillment.email,
+                to=self.external_fulfillment.email,
                 subject=subject,
                 message_text=subject
             )
             print("Sent with gmail api")
             return message
         except Exception as e:
+
             print("Unsuccessful with gmail api, trying next step")
             errors.append(e)
 
