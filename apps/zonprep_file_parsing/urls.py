@@ -1,13 +1,15 @@
 from django.urls import path
 from .views import (SearchAppointmentOrPOViewset, ZonprepAppointmentViewset,
                     ZonprepPurchaseOrderViewset, ZonprepActionViewset,
-                    ZoneprepReportsViewset)
+                    ZoneprepReportsViewset,
+                    ZonprepAppStatusViewset)
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
 router.register(r'search', SearchAppointmentOrPOViewset, basename='search')
 router.register(r'actions', ZonprepActionViewset, basename='actions')
 router.register(r'reports', ZoneprepReportsViewset, basename='reports')
+router.register(r'app-status', ZonprepAppStatusViewset, basename='app-status')
 
 urlpatterns = [
     # List route with appointments

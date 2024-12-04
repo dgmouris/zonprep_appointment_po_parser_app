@@ -6,6 +6,7 @@ from io import BytesIO
 from PIL import Image
 
 from django.db import models
+from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 
@@ -223,7 +224,6 @@ class ZonprepAppointment(BaseModel):
 
     def save_raw_attachment(self, attachment_bytes):
         pdf_content = ContentFile(attachment_bytes)
-
         self.raw_attachment_download.save(
             F"{self.request_id}.pdf",
             pdf_content
@@ -483,6 +483,18 @@ class ZonprepPurchaseOrder(BaseModel):
     def __str__(self):
         return F"PO: {self.p_po_number} - {self.state}, Appointment: {self.appointment}"
 
+    @staticmethod
+    def search_purchase_orders( search_string):
+        return ZonprepPurchaseOrder.objects.filter(
+            Q(p_po_number__icontains=search_string) |
+            Q(p_vendor__icontains=search_string) |
+            Q(appointment__request_id__icontains=search_string) |
+            Q(appointment__p_appointment_id__icontains=search_string) |
+            Q(appointment__p_scac__icontains=search_string)
+        ).prefetch_related(
+            "appointment"
+        )
+
     '''
     This function is going to be used in the parser to create the purchase orders.
 
@@ -557,7 +569,7 @@ class ZonprepPurchaseOrder(BaseModel):
     def move_state_to_sent_to_fulfillment():
         purchase_orders = ZonprepPurchaseOrder.objects.filter(
             state= ZonprepPurchaseOrderState.SCHEDULED_TO_SEND_TO_FULFILLMENT
-        )[:200]
+        )[:400]
         ZonprepPurchaseOrder.send_purchase_order_emails(purchase_orders)
 
     # Purchase Order Parser
@@ -1123,8 +1135,9 @@ class GmailTokenCredentials(SingletonModel):
 class ZonprepAppointmentTask(BaseModel):
     # there's two types of tasks that can be run
     PARSING_TYPE_A_APPOINTMENTS_TASK = "ParsingTypeAAppointments"
-    SEND_APPOINTMENT_EMAILS_TASK = "SendAppointmentEmails"
     PARSING_TYPE_C_PURCHASE_ORDERS_TASK = "ParseTypeCPurchaseOrders"
+    SEND_APPOINTMENT_EMAILS_TASK = "SendAppointmentEmails"
+    SEND_PURCHASE_ORDER_EMAILS_TASK = "SendPurchaseOrderEmails"
 
     task_name = models.CharField(max_length=255)
     state = models.CharField(max_length=255) # ZonprepAppointmentTaskState

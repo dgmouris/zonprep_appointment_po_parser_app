@@ -10,21 +10,26 @@ under the "home" function
 from datetime import datetime, time
 
 from django.utils.html import escape
+from django.utils import timezone
+from datetime import timedelta
 from django.db.models import Q
-
 
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .state import ZonprepAppointmentState
+from .state import ZonprepAppointmentState, ZonprepPurchaseOrderState
 from .seralizers import (ReadOnlySearchAppointmentOrPOSerializer,
                          ZonprepAppointmentSerializer,
                          ZonprepPurchaseOrderDetailSerializer,
-                         ZonprepReportsSerializer
+                         ZonprepReportsSerializer,
+                         ZonprepPurchaseOrderSearchSerializer,
+                         ZonprepPurchaseOrderSetToSendToFullfilmmentSerializer,
+                         ZonprepAppStatusSerializer
                          )
 from .models import ZonprepAppointment, ZonprepPurchaseOrder, ZonprepReports
+from .gmail_utils import GmailUtility
 from .reports import Report
 
 class ZonprepPurchaseOrderViewset(viewsets.ReadOnlyModelViewSet):
@@ -48,6 +53,7 @@ class ZonprepPurchaseOrderViewset(viewsets.ReadOnlyModelViewSet):
             raise NotFound("ZonprepPurchaseOrder with this appointment_id does not exist")
         serializer = self.get_serializer(appointment)
         return Response(serializer.data)
+
 
 
 class ZonprepActionViewset(viewsets.ViewSet):
@@ -74,6 +80,31 @@ class ZonprepActionViewset(viewsets.ViewSet):
         result_serializer = ZonprepAppointmentSerializer(appts, many=True)
         return Response(result_serializer.data)
 
+    @action(
+        detail=False,
+        methods=['post'],
+        url_path='set_purchase_orders_to_be_sent'
+    )
+    def set_purchase_orders_to_be_sent(self, request):
+        results = []
+        serializer = ZonprepPurchaseOrderSetToSendToFullfilmmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # breakpoint()
+        pos = []
+        if serializer.data.get("search_term", None) is not None:
+            pos = ZonprepPurchaseOrder.search_purchase_orders(serializer.data["search_term"])
+        elif serializer.data.get("list_of_po_ids", None) is not None:
+            # breakpoint()
+            po_ids = [int(id) for id in serializer.data.get("list_of_po_ids", [])]
+
+            pos = ZonprepPurchaseOrder.objects.filter(id__in=po_ids)
+
+        # move the state over to scheduled to send to fulfillment
+        for po in pos:
+            if po.state == ZonprepAppointmentState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED:
+                po.move_state_to_scheduled_to_send_to_fulfillment()
+        # send the state.
+        return Response(serializer.data)
 
 
 class ZonprepAppointmentViewset(viewsets.ReadOnlyModelViewSet):
@@ -157,6 +188,20 @@ class SearchAppointmentOrPOViewset(viewsets.ViewSet):
         result_serializer.is_valid(raise_exception=True)
         return Response(result_serializer.data)
 
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path='by_purchase_order',
+    )
+    def search_by_purchase_order(self, request):
+        search = request.query_params.get('q', None)
+        search = escape(search).strip().upper()
+        if search is None:
+            empty_serializer = ZonprepPurchaseOrderSearchSerializer([], many=True)
+            return Response(empty_serializer.data)
+        purchase_orders = ZonprepPurchaseOrder.search_purchase_orders(search)
+        serializer = ZonprepPurchaseOrderSearchSerializer(purchase_orders, many=True)
+        return Response(serializer.data)
 
     @action(
         detail=False,
@@ -299,4 +344,45 @@ class ZoneprepReportsViewset(viewsets.ModelViewSet):
         except ZonprepReports.DoesNotExist:
             raise NotFound("ZonprepReports with this report_type does not exist")
         serializer = self.get_serializer(report, many=True)
+        return Response(serializer.data)
+
+
+class ZonprepAppStatusViewset(viewsets.ViewSet):
+    serializer_class = ZonprepAppStatusSerializer
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path='current'
+    )
+    def current(self, request):
+        appointment_in_queue = ZonprepAppointment.objects.filter(
+            state=ZonprepAppointmentState.CREATED
+        ).count()
+        purchase_orders_in_queue = ZonprepPurchaseOrder.objects.filter(
+            state=ZonprepPurchaseOrderState.SCHEDULED_TO_SEND_TO_FULFILLMENT
+        ).count()
+        appt_count = ZonprepAppointment.objects.filter(
+            state=ZonprepAppointmentState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED
+        ).count()
+        time_threshold = timezone.now() - timedelta(hours=24)
+        appt_count_24 = ZonprepAppointment.objects.filter(
+           updated_at__gte=time_threshold
+        ).count()
+        purchase_order_count = ZonprepPurchaseOrder.objects.filter(
+            state=ZonprepPurchaseOrderState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED
+        ).count()
+        purchase_order_count_24 = ZonprepPurchaseOrder.objects.filter(
+            updated_at__gte=time_threshold
+        ).count()
+
+        serializer = self.serializer_class(data={
+            "apointment_in_queue_count": appointment_in_queue,
+            "purchase_order_in_queue_count": purchase_orders_in_queue,
+            "appointment_count": appt_count,
+            "appointment_count_updated_in_last_day": appt_count_24,
+            "purchase_order_count": purchase_order_count,
+            "purchase_order_count_updated_in_last_day": purchase_order_count_24
+        })
+        serializer.is_valid(raise_exception=True)
         return Response(serializer.data)

@@ -111,3 +111,31 @@ def send_out_appointment_isa_emails_to_fulfillment_task():
     ----------------------
     """)
 
+@shared_task(queue="email_queue")
+def send_out_purchase_order_isa_emails_to_fulfillment_task():
+    logging.info("""
+    ----------------------
+    Sending out purchase order ISA emails to external fulfillment...
+    """)
+    # check to see if the task is running
+    task_name = ZonprepAppointmentTask.SEND_PURCHASE_ORDER_EMAILS_TASK
+    is_running = ZonprepAppointmentTask.is_running(task_name)
+    if is_running:
+        logging.info("Task is already running, skipping...")
+        return
+    # run the task.
+    ZonprepAppointmentTask.set_start_task(task_name)
+    successful = True
+    error_details = ""
+    try:
+        logging.info("Running task...")
+        ZonprepPurchaseOrder.move_state_to_sent_to_fulfillment()
+    except Exception as error:
+        successful = False
+        error_details = F"{error}"
+        logging.error(f"Error: {error}")
+    ZonprepAppointmentTask.set_end_task(task_name, successful=successful, error_details=error_details)
+    logging.info("""
+    Complete, until next interval.
+    ----------------------
+    """)
