@@ -15,6 +15,9 @@ module.exports = {
     library: ["SiteJS", "[name]"],
   },
   resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'assets/javascript/zonprep_app'), // Replace 'src' with your desired folder path
+    },
     extensions: ['.js', '.jsx', '.ts', '.tsx'],
   },
   module: {

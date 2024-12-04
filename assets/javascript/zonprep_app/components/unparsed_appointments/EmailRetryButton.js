@@ -10,7 +10,6 @@ export default function EmailRetryButton({date}) {
   const queryClient = useQueryClient();
 
   const retryAppointmentPostRequest = async () => {
-    console.log('retryAppointmentPostRequest');
     const response = await fetch(`/app/v1/actions/retry_appointments_to_external_fulfillment/${date}`, {method: "POST"});
     return response.data;
   };

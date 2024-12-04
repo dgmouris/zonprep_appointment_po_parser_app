@@ -7,12 +7,12 @@ import {
 } from '@tanstack/react-query'
 
 import AppointmentInfoDisplay from './AppointmentInfoDisplay';
-import AppointmentStatus from '../utils/AppointmentStatus';
+import AppointmentStatus from '@/components/utils/AppointmentStatus';
 import RelatedPurchaseOrdersList from './RelatedPurchaseOrdersList';
 
 export default function AppointmentPage() {
   const { appointmentId } = useParams();
-  
+
   const { isPending, error, data } = useQuery({
     queryKey: ['appointment', appointmentId],
     queryFn: () =>
