@@ -46,6 +46,22 @@ class Command(BaseCommand):
             self.stdout.write(F"Task: '{name}' Already Exists, nothing to do.")
 
         # Create Task: Parsing Type A Email Attachment Worker
+        name = "Sending Purchase Order Email to Fulfilment Worker"
+
+        already_exists = self._does_task_exist(name)
+        if not already_exists:
+            send_out_purchase_order_emails_task = PeriodicTask.objects.create(
+                name='Sending Purchase Order Email to Fulfilment Worker',
+                task='apps.zonprep_file_parsing.tasks.send_out_purchase_order_isa_emails_to_fulfillment_task',
+                interval=schedule,
+            )
+
+            if send_out_purchase_order_emails_task:
+                self.stdout.write(F"Task: '{send_out_purchase_order_emails_task.name}' Successfully")
+            else:
+                self.stdout.write(F"Task: '{name}' Creation Failed")
+
+        # Create Task: Parsing Type A Email Attachment Worker
         name = "Parsing Type A Email Attachment Worker"
 
         already_exists = self._does_task_exist(name)
