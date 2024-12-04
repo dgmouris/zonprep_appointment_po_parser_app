@@ -101,8 +101,9 @@ class ZonprepActionViewset(viewsets.ViewSet):
 
         # move the state over to scheduled to send to fulfillment
         for po in pos:
-            if po.state == ZonprepAppointmentState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED:
+            if po.state == ZonprepAppointmentState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED.value:
                 po.move_state_to_scheduled_to_send_to_fulfillment()
+                print("moved PO {po.p_po_number} to scheduled to send to fulfillment")
         # send the state.
         return Response(serializer.data)
 
