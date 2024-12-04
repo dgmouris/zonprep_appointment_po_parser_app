@@ -932,11 +932,13 @@ class ZonprepPurchaseOrder(BaseModel):
 
 
     def get_email_subject(self):
-        return F"PO Shipments Items for: {self.p_po_number}"
+        return F"{self.p_po_number} fish-console-na.aka.amazon.com"
 
     def get_message_text(self):
         return F"""
-        for the  PO: {self.p_po_number} please return table view containing data:
+        fish-console-na.aka.amazon.com
+        Need Shipment Prep Summary Request for {self.p_po_number}
+        please return table view containing data:
         - fnsku
         - iaid
         - msku
