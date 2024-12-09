@@ -3,6 +3,8 @@ import React, {useState, useCallback } from 'react'
 import PurchaseOrderSearch from './search_utils/PurchaseOrderSearch'
 import SearchResultsTable from './search_utils/SearchResultsTable'
 
+import { useDebounce } from '@/components/utils/hooks/debounce';
+
 
 import {
   useQuery,
@@ -10,19 +12,20 @@ import {
 
 export default function PurchaseOrderToolsPage() {
   const [searchTerm, setSearchTerm] = useState('')
+  // debounce the searchTerm
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // search function to fetch the values, needs to be longer than 3 characters
   const fetchPurchaseOrders = useCallback(async () => {
-    return fetch(`/app/v1/search/by_purchase_order/?q=${searchTerm}`).then((res) =>
+    return fetch(`/app/v1/search/by_purchase_order/?q=${debouncedSearchTerm}`).then((res) =>
       res.json(),
     )
   }, [searchTerm])
 
-
   const { isPending, error, data } = useQuery({
     queryKey: ['search_purchase_orders'],
     queryFn: fetchPurchaseOrders,
-    enabled: searchTerm.length > 3
+    enabled: !!debouncedSearchTerm && debouncedSearchTerm.length > 3
   })
 
   if (error) {
