@@ -110,8 +110,8 @@ export default function SearchResultsTable({rows, searchTerm, isPending}) {
 
 
 
-   const requestPOFromSelected = async () => {
-    const po_ids = data.map(row => row.id)
+  const requestPOFromSelected = async () => {
+    const po_ids = data.filter(row => row.checked).map(row => row.id)
     setRequestPOData({
       list_of_po_ids: po_ids,
     })
