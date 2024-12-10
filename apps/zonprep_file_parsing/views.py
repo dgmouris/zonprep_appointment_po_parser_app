@@ -26,9 +26,10 @@ from .seralizers import (ReadOnlySearchAppointmentOrPOSerializer,
                          ZonprepReportsSerializer,
                          ZonprepPurchaseOrderSearchSerializer,
                          ZonprepPurchaseOrderSetToSendToFullfilmmentSerializer,
-                         ZonprepAppStatusSerializer
+                         ZonprepAppStatusSerializer,
+                         TypeCEmailDetailsSerializer
                          )
-from .models import ZonprepAppointment, ZonprepPurchaseOrder, ZonprepReports
+from .models import ZonprepAppointment, ZonprepPurchaseOrder, ZonprepReports, TypeCEmailDetails
 from .gmail_utils import GmailUtility
 from .reports import Report
 
@@ -386,4 +387,36 @@ class ZonprepAppStatusViewset(viewsets.ViewSet):
             "purchase_order_count_updated_in_last_day": purchase_order_count_24
         })
         serializer.is_valid(raise_exception=True)
+        return Response(serializer.data)
+
+
+class TypeCEmailDetailsViewSet(viewsets.ModelViewSet):
+    serializer_class = TypeCEmailDetailsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return TypeCEmailDetails.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset().first()
+        serializer = self.get_serializer(queryset)
+        return Response(serializer.data)
+
+    def retrieve(self, request, email_id=None, *args, **kwargs):
+        queryset = self.get_queryset().first()
+        serializer = self.get_serializer(queryset)
+        return Response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        instance = TypeCEmailDetails.load()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        instance = TypeCEmailDetails.load()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(serializer.data)

@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from .models import (ZonprepAppointment, ZonprepPurchaseOrder,
                      ZonprepPurchaseOrderSKU, ZonprepPOImageAttachments,
-                     ZonprepReports)
+                     ZonprepReports, TypeCEmailDetails)
 
 class ReadOnlySearchAppointmentOrPOSerializer(serializers.Serializer):
     value = serializers.CharField(max_length=255)
@@ -111,3 +111,9 @@ class ZonprepAppStatusSerializer(serializers.Serializer):
     appointment_count_updated_in_last_day = serializers.IntegerField()
     purchase_order_count = serializers.IntegerField()
     purchase_order_count_updated_in_last_day = serializers.IntegerField()
+
+
+class TypeCEmailDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TypeCEmailDetails
+        fields = '__all__'  # Include all fields from the model

@@ -932,7 +932,7 @@ class ZonprepPurchaseOrder(BaseModel):
 
 
     def get_email_subject(self):
-        return F"{self.p_po_number} fish-console-na.aka.amazon.com"
+        return F"PO# {self.p_po_number} Using FISH / Shipment Prep Summary Request"
 
     def get_message_text(self):
         return F"""
@@ -1128,6 +1128,13 @@ class GmailTokenCredentials(SingletonModel):
     def update_token(self, token):
         self.token = token
         self.save()
+
+class TypeCEmailDetails(SingletonModel):
+    email_subject = models.CharField(max_length=255)
+    email_body = models.TextField()
+
+    def __str__(self) -> str:
+        return F"Type C Email Details: {self.email_subject}"
 
 
 # This is a model that will store if the task is running or not
