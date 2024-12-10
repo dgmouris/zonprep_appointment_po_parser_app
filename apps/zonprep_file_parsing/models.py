@@ -921,8 +921,10 @@ class ZonprepPurchaseOrder(BaseModel):
         external_fulfillment = ExternalFulfillmentEmail.load()
         mass_mailer_utils = MassMailerUtility(external_fulfillment)
 
-        subject = self.get_email_subject()
-        message_text = self.get_message_text()
+        type_c_email_details = TypeCEmailDetails.load()
+
+        subject = self.get_email_subject(type_c_email_details)
+        message_text = self.get_message_text(type_c_email_details)
 
         return mass_mailer_utils.send_email(
             to=external_fulfillment.email,
@@ -931,24 +933,13 @@ class ZonprepPurchaseOrder(BaseModel):
         )
 
 
-    def get_email_subject(self):
-        return F"PO# {self.p_po_number} Using FISH / Shipment Prep Summary Request"
+    def get_email_subject(self, email_details):
+        subject = email_details.email_subject.replace("PO_NUMBER", self.p_po_number)
+        return subject
 
-    def get_message_text(self):
-        return F"""
-        fish-console-na.aka.amazon.com
-        Need Shipment Prep Summary Request for {self.p_po_number}
-        please return table view containing data:
-        - fnsku
-        - iaid
-        - msku
-        - weight
-        - shipped quantity
-        - recieved quantity
-        - update date
-        - create date
-        - prep details
-        """
+    def get_message_text(self, email_details):
+        message = email_details.email_body.replace("PO_NUMBER", self.p_po_number)
+        return message
 
     @staticmethod
     def get_item_or_first(my_list, index):
@@ -1130,8 +1121,12 @@ class GmailTokenCredentials(SingletonModel):
         self.save()
 
 class TypeCEmailDetails(SingletonModel):
-    email_subject = models.CharField(max_length=255)
-    email_body = models.TextField()
+    email_subject = models.CharField(
+        max_length=255,
+        default="Using FISH / Shipment Prep Summary Request for PO_NUMBER")
+    email_body = models.TextField(
+        default="Need Shipment Prep Summary Request for PO_NUMBER"
+    )
 
     def __str__(self) -> str:
         return F"Type C Email Details: {self.email_subject}"
