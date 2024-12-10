@@ -6,6 +6,7 @@ import PurchaseOrderPage from './components/purchase_order/PurchaseOrderPage';
 import UnparsedAppointmentsPage from './components/unparsed_appointments/UnparsedAppointmentsPage';
 import ReportsPage from './components/reports/ReportsPage';
 import PurchaseOrderToolsPage from './components/purchase_order_tools/PurchaseOrderToolsPage';
+import TypeCEmailPage from './components/type_c_emails/TypeCEmailPage';
 
 import {
   HashRouter,
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="/unparsed_appointments" element={<UnparsedAppointmentsPage />} />
             <Route path="/reports" element={<ReportsPage/>} />
             <Route path="/purchase_order_tools" element={<PurchaseOrderToolsPage/>} />
+            <Route path="/type_c_email" element={<TypeCEmailPage/>} />
           </Routes>
         </HashRouter>
       </QueryClientProvider>
