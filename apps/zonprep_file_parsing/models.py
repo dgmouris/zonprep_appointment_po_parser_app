@@ -493,7 +493,7 @@ class ZonprepPurchaseOrder(BaseModel):
             Q(appointment__p_scac__icontains=search_string)
         ).prefetch_related(
             "appointment"
-        )
+        ).order_by("-created_at")
 
     '''
     This function is going to be used in the parser to create the purchase orders.
