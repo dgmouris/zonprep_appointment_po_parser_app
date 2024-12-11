@@ -26,7 +26,7 @@ class MassMailerUtility():
             message = self.gmail_utils.send_email(
                 to=self.external_fulfillment.email,
                 subject=subject,
-                message_text=subject
+                message_text=message_text
             )
             print("Sent with gmail api")
             return message
@@ -41,7 +41,7 @@ class MassMailerUtility():
             self.gmail_smtp_utils.send_email(
                 to=self.external_fulfillment.email,
                 subject=subject,
-                message_text=subject
+                message_text=message_text
             )
             print("Sent with gmail smtp")
             return True
@@ -57,7 +57,7 @@ class MassMailerUtility():
                 sender="pod@freight-corp.com",
                 to=self.external_fulfillment.email,
                 subject=subject,
-                message_text=subject
+                message_text=message_text
             )
             print("Sent with sendgrid")
             return message
