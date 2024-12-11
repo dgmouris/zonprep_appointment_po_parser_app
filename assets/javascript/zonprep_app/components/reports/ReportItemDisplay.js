@@ -64,7 +64,7 @@ export default function ReportItemDisplay({name, apiPathName, startDate, endDate
     if (typeof day === 'string') {
       return day.split('T')[0]
     }
-    return day
+    return day.toISOString().split('T')[0]
   }
 
   const generateReport = () => {

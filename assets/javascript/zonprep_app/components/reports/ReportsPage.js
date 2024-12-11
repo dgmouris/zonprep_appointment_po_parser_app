@@ -20,6 +20,10 @@ const REPORT_TYPES = [
   {
     name: "Purchase Order to Facility Statistics",
     apiPathName: "purchase_orders_to_facility"
+  },
+  {
+    name: "Unique Vendor Code per Appointment Count with FC Code",
+    apiPathName: "unique_vendor_code_per_appointment_count_with_fc_code"
   }
 ]
 

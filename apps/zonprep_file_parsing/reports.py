@@ -24,6 +24,8 @@ class Report(ABC):
             return UniqueVendorCodePerApptCount()
         elif report_type == PurchaseOrdersToFacility.REPORT_TYPE:
             return PurchaseOrdersToFacility()
+        elif report_type == UniqueVendorCodePerApptCountWithFCCode.REPORT_TYPE:
+            return UniqueVendorCodePerApptCountWithFCCode()
         return None
     # classes to be implemented
     # you need to set the start, end, and report_file class vars
@@ -139,7 +141,7 @@ class UniqueVendorCodePerApptCount(Report):
             "UPSZ",
         ]
         appts =ZonprepAppointment.objects.filter(
-            p_scac__in=vendor_scac,
+            # p_scac__in=vendor_scac,
             state=ZonprepAppointmentState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED,
             created_at__range=[start, end]
         ).prefetch_related("purchase_orders")
@@ -152,7 +154,7 @@ class UniqueVendorCodePerApptCount(Report):
             # set of vendor codes.
             appt_vendor_codes = set([])
             for po in appt.purchase_orders.all():
-                po_vendor_codes = po.p_vendor.split(", ")
+                po_vendor_codes = po.p_vendor.replace(" ", "").split(",")
                 appt_vendor_codes.update(po_vendor_codes)
             # deal with all vendor codes:
             for vendor_code in list(appt_vendor_codes):
@@ -176,6 +178,72 @@ class UniqueVendorCodePerApptCount(Report):
                 report_csv_rows.append([scac, vendor, count])
 
         return self.save_csv_temp_file(report_csv_rows)
+
+
+class UniqueVendorCodePerApptCountWithFCCode(Report):
+    REPORT_TYPE = 'unique_vendor_code_per_appointment_count_with_fc_code'
+
+    def generate_report(self, start, end):
+        self.start = start
+        self.end = end
+
+        vendor_scac = [
+            "FDCC",
+            "FDEG",
+            "FDEN",
+            "FEXF",
+            "FLJF",
+            "FXFE",
+            "FXFW",
+            "FXNL",
+            "UPSN",
+            "UPSS",
+            "UPSC",
+            "UPSZ",
+        ]
+        appts =ZonprepAppointment.objects.filter(
+            # p_scac__in=vendor_scac,
+            state=ZonprepAppointmentState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED,
+            created_at__range=[start, end],
+            fc_code__isnull=False
+        ).prefetch_related("purchase_orders")
+
+        all_vendor_per_fc_codes = {}
+        for appt in appts:
+            # breakpoint()
+            if appt.fc_code not in all_vendor_per_fc_codes.keys():
+                all_vendor_per_fc_codes[appt.fc_code] = {}
+            if appt.p_scac not in all_vendor_per_fc_codes[appt.fc_code].keys():
+                all_vendor_per_fc_codes[appt.fc_code][appt.p_scac] = {}
+            # set of vendor codes.
+            appt_vendor_codes = set([])
+            for po in appt.purchase_orders.all():
+                po_vendor_codes = po.p_vendor.replace(" ", "").split(",")
+                appt_vendor_codes.update(po_vendor_codes)
+            # deal with all vendor codes:
+            for vendor_code in list(appt_vendor_codes):
+                if vendor_code == "":
+                    continue
+                # if it's not in the vendor codes add it in keys.
+                if not vendor_code in all_vendor_per_fc_codes[appt.fc_code][appt.p_scac].keys():
+                    # start the vendor codes
+                    all_vendor_per_fc_codes[appt.fc_code][appt.p_scac][vendor_code] = 1
+                else:
+                    all_vendor_per_fc_codes[appt.fc_code][appt.p_scac][vendor_code] = all_vendor_per_fc_codes[appt.fc_code][appt.p_scac][vendor_code] + 1
+
+
+        # remove all of the empty scac codes
+        all_vendor_per_fc_codes = {k: v for k, v in all_vendor_per_fc_codes.items() if v != {}}
+
+        report_csv_rows = [["fc_code", "scac", "vendor", "count"]]
+        # format all rows for report
+        for fc_code, fc_code_vendor_for_scac in all_vendor_per_fc_codes.items():
+            for scac, vendor_for_scac in fc_code_vendor_for_scac.items():
+                for vendor, count in vendor_for_scac.items():
+                    report_csv_rows.append([fc_code, scac, vendor, count])
+
+        return self.save_csv_temp_file(report_csv_rows)
+
 
 
 class PurchaseOrdersToFacility(Report):
@@ -225,3 +293,5 @@ class PurchaseOrdersToFacility(Report):
             ])
 
         return self.save_csv_temp_file(report_csv_rows)
+
+
