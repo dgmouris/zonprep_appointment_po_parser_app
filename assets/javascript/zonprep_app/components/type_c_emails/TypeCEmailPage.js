@@ -129,7 +129,6 @@ export default function TypeCEmailPage() {
                   value={body}
                 />
               </div>
-              <p className="mt-3 text-sm/6 text-gray-600">Write a few sentences about yourself.</p>
             </div>
             <div className="col-span-full">
               <button
