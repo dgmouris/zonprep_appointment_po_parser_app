@@ -61,7 +61,10 @@ export default function ReportItemDisplay({name, apiPathName, startDate, endDate
     if (day === undefined) {
       day = dateValue.startDate
     }
-    return day.toISOString().split('T')[0]
+    if (typeof day === 'string') {
+      return day.split('T')[0]
+    }
+    return day
   }
 
   const generateReport = () => {
@@ -85,7 +88,7 @@ export default function ReportItemDisplay({name, apiPathName, startDate, endDate
       </dt>
       <dd className="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
         <GeneratedReportsAccordion
-          title="Last Generated reports for blah"
+          title={`Last Generated reports for "${name}"`}
         >
           <ul role="list" className="divide-y divide-gray-100 rounded-md">
             {isPending && <span className="truncate font-medium">Loading Reports</span>}
@@ -103,7 +106,7 @@ export default function ReportItemDisplay({name, apiPathName, startDate, endDate
                     <PaperClipIcon aria-hidden="true" className="size-5 shrink-0 text-gray-400" />
                     <div className="ml-4 flex min-w-0 flex-1 gap-2">
                       <span className="truncate font-medium">
-                        Report created {report.created_at}
+                        Report created {getFormattedDate(report.created_at)}
                       </span>
                     </div>
                   </div>
