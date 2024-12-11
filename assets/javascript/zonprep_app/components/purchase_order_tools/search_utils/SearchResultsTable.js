@@ -73,7 +73,7 @@ export default function SearchResultsTable({rows, searchTerm, isPending}) {
   const poFromSelectedMutation = useMutation({
     mutationFn: () => {
       return fetch(`/app/v1/actions/set_purchase_orders_to_be_sent/`, {
-        method: "PATCH",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-CSRFToken": getCSRFToken()
