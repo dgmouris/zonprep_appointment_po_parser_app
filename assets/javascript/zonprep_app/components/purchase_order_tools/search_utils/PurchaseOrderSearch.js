@@ -1,8 +1,12 @@
 import React,{useEffect} from 'react'
 import { useSearchParams } from 'react-router-dom';
 
+import { useQueryClient } from '@tanstack/react-query';
+
 export default function PurchaseOrderSearch({searchTerm, setSearchTerm}) {
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     let search = searchParams.get('search')
@@ -15,6 +19,7 @@ export default function PurchaseOrderSearch({searchTerm, setSearchTerm}) {
     if (searchTerm) {
       searchParams.set('search', searchTerm);
       setSearchParams(searchParams);
+      queryClient.invalidateQueries({ queryKey: ['search_purchase_orders'] })
     }
   }, [searchTerm])
 
