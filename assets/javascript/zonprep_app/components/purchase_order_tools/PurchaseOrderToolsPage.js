@@ -21,7 +21,7 @@ export default function PurchaseOrderToolsPage() {
   const { isPending, error, data } = useQuery({
     queryKey: ['search_purchase_orders'],
     queryFn: fetchPurchaseOrders,
-    enabled: !!searchTerm && searchTerm.length > 3
+    enabled: searchTerm.length > 3
   })
 
   if (error) {
