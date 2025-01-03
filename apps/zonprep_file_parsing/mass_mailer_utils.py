@@ -1,3 +1,4 @@
+from django.conf import settings
 from .gmail_utils import GmailUtility
 from .gmail_smtp_utils import GmailSMTPUtility
 from .sendgrid_utils import SendGridUtility
@@ -54,7 +55,7 @@ class MassMailerUtility():
         try:
             print("Step 3: Trying to send with sendgrid")
             message = self.sendgrid_utils.send_email(
-                sender="pod@freight-corp.com",
+                sender=settings.SEND_GRID_SENDER,
                 to=self.external_fulfillment.email,
                 subject=subject,
                 message_text=message_text
