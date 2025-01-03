@@ -11,6 +11,7 @@ class ZonprepAppointmentTaskState(Enum):
 
 class ZonprepAppointmentState(Enum):
     CREATED = "Created"
+    DELETED = "Deleted"
     SENT_TO_FULFILLMENT = "SentToFulfillment"
     FULFILLMENT_NOT_REPLIED = "FulfillmentNotReplied"
     FULFILLMENT_RAW_ATTACHMENT_DOWNLOADED = "FulfillmentRawAttachmentDownloaded"

@@ -126,13 +126,33 @@ class ZonprepActionViewset(viewsets.ViewSet):
 
     @action(
         detail=False,
-        methods=['get'],
-        url_path='email_queue_status'
+        methods=['post'],
+        url_path='delete_email_queue'
     )
-    def email_queue_status(self, request):
-        instance = PauseEmailQueue.load()
-        serializer = PauseEmailQueueSerializer(instance)
-        return Response(serializer.data)
+    def delete_email_queue(self, request):
+        email_queue = PauseEmailQueue.load()
+        # delete all appointments
+        appointments = ZonprepAppointment.objects.filter(
+            state=ZonprepAppointmentState.CREATED
+        )
+
+        for appt in appointments:
+            appt.state = ZonprepAppointmentState.DELETED
+            appt.save()
+
+        # reset all purchase orders
+        purchase_orders = ZonprepPurchaseOrder.objects.filter(
+            state=ZonprepPurchaseOrderState.SCHEDULED_TO_SEND_TO_FULFILLMENT
+        )
+
+        for po in purchase_orders:
+            po.state = ZonprepPurchaseOrderState.SUCCESS_SALESFORCE_APPOINTMENT_DATA_UPLOADED
+            po.save()
+
+        email_queue.paused = False
+        email_queue.save()
+
+        return Response({"message": "Email Queue has been deleted"})
 
 
 class ZonprepAppointmentViewset(viewsets.ReadOnlyModelViewSet):
