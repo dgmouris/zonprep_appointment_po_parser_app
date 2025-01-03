@@ -6,7 +6,7 @@ from .models import (ZonprepAppointment, ExternalFulfillmentEmail,
                      ZonprepPurchaseOrder, ZonprepAppointmentTask,
                      GmailTokenCredentials, ZonprepPOImageAttachments,
                      ZonprepPurchaseOrderSKU, ZonprepReports,
-                     TypeCEmailDetails)
+                     TypeCEmailDetails, PauseEmailQueue)
 
 admin.site.register(ZonprepAppointmentTask)
 admin.site.register(ExternalFulfillmentEmail)
@@ -17,3 +17,4 @@ admin.site.register(ZonprepPOImageAttachments)
 admin.site.register(ZonprepPurchaseOrderSKU)
 admin.site.register(ZonprepReports)
 admin.site.register(TypeCEmailDetails)
+admin.site.register(PauseEmailQueue)

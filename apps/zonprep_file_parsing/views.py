@@ -27,9 +27,14 @@ from .seralizers import (ReadOnlySearchAppointmentOrPOSerializer,
                          ZonprepPurchaseOrderSearchSerializer,
                          ZonprepPurchaseOrderSetToSendToFullfilmmentSerializer,
                          ZonprepAppStatusSerializer,
-                         TypeCEmailDetailsSerializer
+                         TypeCEmailDetailsSerializer,
+                         PauseEmailQueueSerializer
                          )
-from .models import ZonprepAppointment, ZonprepPurchaseOrder, ZonprepReports, TypeCEmailDetails
+from .models import (ZonprepAppointment,
+                     ZonprepPurchaseOrder,
+                     ZonprepReports,
+                     TypeCEmailDetails,
+                     PauseEmailQueue)
 from .gmail_utils import GmailUtility
 from .reports import Report
 
@@ -90,12 +95,10 @@ class ZonprepActionViewset(viewsets.ViewSet):
         results = []
         serializer = ZonprepPurchaseOrderSetToSendToFullfilmmentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # breakpoint()
         pos = []
         if serializer.data.get("search_term", None) is not None:
             pos = ZonprepPurchaseOrder.search_purchase_orders(serializer.data["search_term"])
         elif serializer.data.get("list_of_po_ids", None) is not None:
-            # breakpoint()
             po_ids = [int(id) for id in serializer.data.get("list_of_po_ids", [])]
 
             pos = ZonprepPurchaseOrder.objects.filter(id__in=po_ids)
@@ -106,6 +109,29 @@ class ZonprepActionViewset(viewsets.ViewSet):
                 po.move_state_to_scheduled_to_send_to_fulfillment()
                 print("moved PO {po.p_po_number} to scheduled to send to fulfillment")
         # send the state.
+        return Response(serializer.data)
+
+
+    @action(
+        detail=False,
+        methods=['post'],
+        url_path='toggle_email_queue'
+    )
+    def toggle_email_queue(self, request):
+        instance = PauseEmailQueue.load()
+        instance.paused = not instance.paused
+        instance.save()
+        serializer = PauseEmailQueueSerializer(instance)
+        return Response(serializer.data)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path='email_queue_status'
+    )
+    def email_queue_status(self, request):
+        instance = PauseEmailQueue.load()
+        serializer = PauseEmailQueueSerializer(instance)
         return Response(serializer.data)
 
 
@@ -358,6 +384,7 @@ class ZonprepAppStatusViewset(viewsets.ViewSet):
         url_path='current'
     )
     def current(self, request):
+        # breakpoint()
         appointment_in_queue = ZonprepAppointment.objects.filter(
             state=ZonprepAppointmentState.CREATED
         ).count()
@@ -384,11 +411,20 @@ class ZonprepAppStatusViewset(viewsets.ViewSet):
             "appointment_count": appt_count,
             "appointment_count_updated_in_last_day": appt_count_24,
             "purchase_order_count": purchase_order_count,
-            "purchase_order_count_updated_in_last_day": purchase_order_count_24
+            "purchase_order_count_updated_in_last_day": purchase_order_count_24,
         })
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data)
 
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path='email_queue_status'
+    )
+    def email_queue_status(self, request):
+        instance = PauseEmailQueue.load()
+        serializer = PauseEmailQueueSerializer(instance)
+        return Response(serializer.data)
 
 class TypeCEmailDetailsViewSet(viewsets.ModelViewSet):
     serializer_class = TypeCEmailDetailsSerializer

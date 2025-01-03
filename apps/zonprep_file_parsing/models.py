@@ -190,6 +190,11 @@ class ZonprepAppointment(BaseModel):
     @staticmethod
     def send_appointment_emails(appointments):
         for appointment in appointments:
+            email_queue = PauseEmailQueue.load()
+            if email_queue.paused:
+                logging.info(F"send_appointment_emails is paused")
+
+                return
             # send the email but wait 20 seconds before sending the next one.
             time.sleep(9)
             current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -898,6 +903,7 @@ class ZonprepPurchaseOrder(BaseModel):
         attachment_instance = ZonprepPOImageAttachments.save_image_attachment(self, attachment_bytes)
         return attachment_instance
 
+
     '''
     This function will send out emails to the external fulfillment team
     and move the state to SENT_TO_FULFILLMENT
@@ -906,6 +912,11 @@ class ZonprepPurchaseOrder(BaseModel):
     @staticmethod
     def send_purchase_order_emails(purchase_orders):
         for po in purchase_orders:
+            email_queue = PauseEmailQueue.load()
+
+            if email_queue.paused:
+                logging.info(F"send_purchase_order_emails is paused")
+                return
             # send the email but wait 20 seconds before sending the next one.
             time.sleep(9)
             current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -1194,3 +1205,10 @@ class ZonprepReports(BaseModel):
 
     def __str__(self):
         return F"Report: {self.report_type}, Created at: {self.created_at}"
+
+class PauseEmailQueue(SingletonModel):
+    paused = models.BooleanField(default=False,
+                                 help_text="This will pause the email queue if checked")
+
+    def __str__(self):
+        return F"Pause Email Queue: {self.paused}"
