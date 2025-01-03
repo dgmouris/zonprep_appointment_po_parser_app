@@ -25,6 +25,7 @@ class MassMailerUtility():
         try:
             print("Step 1: Trying to send with gmail api")
             message = self.gmail_utils.send_email(
+                sender=settings.SEND_GRID_SENDER, # this is the same email.
                 to=self.external_fulfillment.email,
                 subject=subject,
                 message_text=message_text
