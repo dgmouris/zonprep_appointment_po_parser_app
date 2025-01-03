@@ -63,7 +63,7 @@ export default function EmailQueueManagerButtons() {
       return response.json()
     },
     onMutate: () => {
-      queryClient.invalidateQueries({ queryKey: ['email_queue_status'] })
+      queryClient.invalidateQueries({ queryKey: ['email_queue_status',  'current_app_status'] })
     },
     onSuccess: (data) => {
       showNotification({
