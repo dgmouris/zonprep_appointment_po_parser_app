@@ -9,7 +9,7 @@ import {
 
 export default function AppStatus() {
   const { isPending, error, data } = useQuery({
-    queryKey: ['search_purchase_orders'],
+    queryKey: ['current_app_status'],
     queryFn: () => {
       return fetch(`/app/v1/app-status/current/`).then((res) =>
         res.json(),
@@ -48,7 +48,7 @@ export default function AppStatus() {
           description={"emails in queue"}
           detail={`${data.apointment_in_queue_count} appts and ${data.purchase_order_in_queue_count} pos`}
         />
-        <EmailQueueManagerButtons paused={data.paused_queue}/>
+        <EmailQueueManagerButtons/>
       </div>
       <div className="mb-4">
         <AppStatusStatistic
