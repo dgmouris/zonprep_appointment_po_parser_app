@@ -15,15 +15,16 @@ env:
     - CLOUD_STORAGE_CREDENTIALS
     - CLOUD_STORAGE_NAME
     - EMAIL_HOST_USER
+    - EMAIL_HOST_USER_ALIAS
     - EMAIL_HOST_PASSWORD
     - SENDGRID_API_KEY
+    - SEND_GRID_SENDER
     - EASYOCR_MODULE_PATH
     - SALESFORCE_USERNAME
     - SALESFORCE_PASSWORD
     - SALESFORCE_SECURITY_TOKEN
     - TURNSTILE_KEY
     - TURNSTILE_SECRET
-
 
 # https://kamal-deploy.org/docs/configuration#using-different-roles-for-servers
 servers:
