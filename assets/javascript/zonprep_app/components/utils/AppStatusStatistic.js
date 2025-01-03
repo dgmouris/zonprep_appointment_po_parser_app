@@ -4,7 +4,7 @@ import Divider from './uikit/Divider'
 import Badge from './uikit/Badge'
 
 export default function AppStatusStatistic({title, description, value, detail}) {
-  return  <div>
+  return  <>
     <Divider />
     <div className="mt-4 text-lg/6 font-medium sm:text-sm/6">
       {title}
@@ -14,11 +14,10 @@ export default function AppStatusStatistic({title, description, value, detail}) 
       <span className="ml-2 text-sm font-medium text-gray-500">{description}</span>
     </div>
     <div className="mt-3 text-sm/6 sm:text-xs/6">
-    <div className="mb-4">
-      <Badge color="indigo" text={detail} />
+      <div className="mb-4">
+        <Badge color="indigo" text={detail} />
+      </div>
+      <Divider />
     </div>
-    <Divider />
-    </div>
-  </div>
-
+  </>
 }

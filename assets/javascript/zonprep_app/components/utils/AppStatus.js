@@ -1,6 +1,7 @@
 import React from 'react'
 
 import AppStatusStatistic from './AppStatusStatistic'
+import EmailQueueManagerButtons from './EmailQueueManagerButtons'
 
 import {
   useQuery,
@@ -40,24 +41,33 @@ export default function AppStatus() {
       Overview of App Status Queue
     </h3>
     <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-3">
-      <AppStatusStatistic
-        title="Emails in Queue"
-        value={data.apointment_in_queue_count + data.purchase_order_in_queue_count}
-        description={"emails in queue"}
-        detail={`${data.apointment_in_queue_count} appts and ${data.purchase_order_in_queue_count} pos`}
+      <div className="mb-4">
+        <AppStatusStatistic
+          title="Emails in Queue"
+          value={data.apointment_in_queue_count + data.purchase_order_in_queue_count}
+          description={"emails in queue"}
+          detail={`${data.apointment_in_queue_count} appts and ${data.purchase_order_in_queue_count} pos`}
         />
-      <AppStatusStatistic
-        title="Appointments"
-        value={data.appointment_count}
-        description={"parsed successfully"}
-        detail={`${data.appointment_count_updated_in_last_day} done today`}
-      />
-      <AppStatusStatistic
-        title="Purchase Orders"
-        value={data.purchase_order_count}
-        description={"created successfully"}
-        detail={`${data.purchase_order_count_updated_in_last_day} done today`}
-      />
+        <EmailQueueManagerButtons paused={data.paused_queue}/>
+      </div>
+      <div className="mb-4">
+        <AppStatusStatistic
+          title="Appointments"
+          value={data.appointment_count}
+          description={"parsed successfully"}
+          detail={`${data.appointment_count_updated_in_last_day} done today`}
+        />
+
+      </div>
+      <div className="mb-4">
+        <AppStatusStatistic
+          title="Purchase Orders"
+          value={data.purchase_order_count}
+          description={"created successfully"}
+          detail={`${data.purchase_order_count_updated_in_last_day} done today`}
+        />
+
+      </div>
     </div>
   </section>
 }
