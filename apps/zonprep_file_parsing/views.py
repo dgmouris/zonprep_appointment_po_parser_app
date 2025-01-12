@@ -61,7 +61,6 @@ class ZonprepPurchaseOrderViewset(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
 
-
 class ZonprepActionViewset(viewsets.ViewSet):
     @action(
         detail=False,
@@ -154,6 +153,20 @@ class ZonprepActionViewset(viewsets.ViewSet):
 
         return Response({"message": "Email Queue has been deleted"})
 
+    @action(
+        detail=False,
+        methods=['post'],
+        url_path='process_and_parse_po_again/(?P<po_number>[^/.]+)'
+    )
+    def process_and_parse_po_again(self, request, po_number=None):
+        purchase_orders = ZonprepPurchaseOrder.objects.filter(p_po_number=po_number)
+        if purchase_orders:
+            ZonprepPurchaseOrder.process_and_parse_purchase_orders(purchase_orders)
+
+            serializer = ZonprepPurchaseOrderDetailSerializer(purchase_orders.first())
+            return Response(serializer.data)
+        else:
+            return Response({"message": "Purchase Order not found"})
 
 class ZonprepAppointmentViewset(viewsets.ReadOnlyModelViewSet):
     serializer_class = ZonprepAppointmentSerializer
