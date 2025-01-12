@@ -1,18 +1,16 @@
 import React from 'react'
 
-const people = [
-  { name: 'Lindsay Walton', title: 'Front-end Developer', email: 'lindsay.walton@example.com', role: 'Member' },
-  // More people...
-]
+import ProcessAndParseSinglePoButton from '@/components/utils/ProcessAndParseSinglePoButton'
 
-export default function PurchaseOrderSKUTable({imageAttachments, skus}) {
-  console.log(skus)
+export default function PurchaseOrderSKUTable({po, imageAttachments, skus}) {
+  console.log("PurchaseOrderSKUTable", po)
   if (skus.length === 0) {
     return <section className="app-card">
     <div className="">
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
-          <h1 className="text-base font-semibold text-gray-900">No Type C Data associated to this purchase order</h1>
+          <h1 className="text-base font-semibold text-gray-900 pb-2">No Type C Data associated to this purchase order</h1>
+          <ProcessAndParseSinglePoButton po_number={po.p_po_number} />
         </div>
       </div>
       </div>
@@ -24,15 +22,19 @@ export default function PurchaseOrderSKUTable({imageAttachments, skus}) {
         <div className="sm:flex sm:items-center">
           <div className="sm:flex-auto">
             <h1 className="text-base font-semibold text-gray-900">Type C Data associated to purchase order</h1>
-            <p className="mt-2 text-sm text-gray-700">
-              A list of data associated to this purchase order.<br/>
-              {imageAttachments.length > 0 && "images downloaded:"}
+            <div className="mt-2 flex space-x-2">
+              <p className="text-sm flex-1 text-gray-700">
+                A list of data associated to this purchase order.<br/>
+                {imageAttachments.length > 0 && "images downloaded:"}
 
-              {imageAttachments.map((attachment, index) => {
-                return <a href={attachment.image_attachment} target="_blank" className="text-blue-500">{" "}image {index+1}</a>
-              }) }
-            </p>
-
+                {imageAttachments.map((attachment, index) => {
+                  return <a key={index} href={attachment.image_attachment} target="_blank" className="text-blue-500">{" "}image {index+1}</a>
+                }) }
+              </p>
+              <div>
+                <ProcessAndParseSinglePoButton po_number={po.p_po_number} />
+              </div>
+            </div>
           </div>
         </div>
         <div className="mt-8 flow-root">

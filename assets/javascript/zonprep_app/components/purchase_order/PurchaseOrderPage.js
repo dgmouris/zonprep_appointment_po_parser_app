@@ -52,6 +52,7 @@ export default function PurchaseOrderPage() {
       <div className="flex flex-col md:flex-row  md:gap-4">
         <div className="w-full">
           <PurchaseOrderSKUTable
+            po={data}
             skus={data.skus}
             imageAttachments={data.image_attachments}
           />
