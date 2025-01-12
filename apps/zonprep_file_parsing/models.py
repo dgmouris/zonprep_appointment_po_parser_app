@@ -599,7 +599,6 @@ class ZonprepPurchaseOrder(BaseModel):
             if not attachment:
                 # TODO: add the day timeout logic.
                 continue
-
             if  po.image_attachments.all().exists():
                 # delete the old attachment.
                 po.image_attachments.all().delete()
@@ -826,6 +825,8 @@ class ZonprepPurchaseOrder(BaseModel):
             ).strip(
             ).split(",")
 
+        if "owner" not in prep_details_titles.lower():
+            return []
         # going to make an array of these values until I know how to handle them.
         formatted_prep_details = []
         for index in range(len(prep_details_titles)):
@@ -853,6 +854,11 @@ class ZonprepPurchaseOrder(BaseModel):
         second_row = " ".join(
             [value["value"] for value in prep_details_row_two.values()]
         ).strip()
+
+        # if there's no prep details in it then just return the string.
+        # it should have an owner in it or not.
+        if "owner" not in first_row.lower():
+            return ""
 
         return F"{first_row} {second_row}".strip()
 
@@ -896,7 +902,7 @@ class ZonprepPurchaseOrder(BaseModel):
 
     def get_gmail_attachment_query_string(self):
         # note: I only need to have the appointment id as the subject.
-        return F"subject:{self.p_po_number} has:attachment"
+        return F"subject:{self.p_po_number} has:attachment filename:(jpg OR png) "
 
     def save_image_attachment(self, attachment_bytes):
         # image_content = ContentFile(attachment_bytes)
